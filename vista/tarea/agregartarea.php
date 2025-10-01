@@ -1,8 +1,6 @@
-
 <?php
-// ============================================
-// ARCHIVO: vista/tarea/agregartarea.php
-// ============================================
+session_start();
+include "../../modelo/Conexion.php";
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -40,9 +38,7 @@
         <div class="col-12">
             <form method="post">
                 <?php
-                include "../../modelo/Conexion.php";
                 include "../../controlador/tarea/registro_tarea.php";
-                include "../../controlador/tarea/eliminar_tarea.php";
                 ?>
                 <div class="row mb-3">
                     <div class="col-6">
@@ -50,10 +46,10 @@
                         <select class="form-control" id="ID_Empleado" name="ID_Empleado" required>
                             <option value="">Seleccione un empleado</option>
                             <?php
-                            // ✅ CORREGIDO: Obtener lista de empleados con PostgreSQL
-                            $sql_empleados = pg_query($conexion, "SELECT id_empleado, nombre, apellido FROM empleados ORDER BY nombre");
-                            while ($emp = pg_fetch_object($sql_empleados)) {
-                                echo "<option value='{$emp->id_empleado}'>{$emp->nombre} {$emp->apellido}</option>";
+                            // ✅ MySQL
+                            $sql_empleados = mysqli_query($conexion, "SELECT ID_Empleado, Nombre, Apellido FROM empleados ORDER BY Nombre");
+                            while ($emp = mysqli_fetch_object($sql_empleados)) {
+                                echo "<option value='{$emp->ID_Empleado}'>{$emp->Nombre} {$emp->Apellido}</option>";
                             }
                             ?>
                         </select>

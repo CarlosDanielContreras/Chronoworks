@@ -1,12 +1,6 @@
 <?php
-// ============================================
-// ARCHIVO: vista/tarea/listatarea.php
-// ============================================
-?>
-<?php
 session_start();
 
-// Verificar si hay sesión activa
 if (!isset($_SESSION['id_rol'])) {
     header("Location: ../../login.php");
     exit();
@@ -27,7 +21,7 @@ include "../../controlador/tarea/eliminar_tarea.php";
     <link rel="stylesheet" href="../../css/header.css">
     <script src="https://kit.fontawesome.com/8eb65f8551.js" crossorigin="anonymous"></script>
 </head>
-<body class="fondo <?php echo ($_SESSION['id_rol'] === 3) ? 'agente' : ''; ?>">
+<body class="fondo <?php echo ($_SESSION['id_rol'] === 3) ? 'agente' : ''; ?>" id="listatarea-vista">
     <header>
         <div class="fondo_menu">
             <div class="container-fluid">
@@ -150,34 +144,36 @@ include "../../controlador/tarea/eliminar_tarea.php";
                 </thead>
                 <tbody>
                     <?php
-                    // ✅ CORREGIDO: Usar pg_query con JOIN para mostrar nombre del empleado
+                    // ✅ MySQL: Consulta con JOIN
                     if ($_SESSION['id_rol'] == 3) {
                         // Para agentes, solo sus tareas
-                        $idempleado = $_SESSION['id_empleado'];
-                        $sql = pg_query_params($conexion, 
-                            "SELECT t.id_tarea, t.nombre_tarea, t.detalles, e.nombre || ' ' || e.apellido as empleado
+                        $idempleado = (int)$_SESSION['id_empleado'];
+                        $stmt = mysqli_prepare($conexion, 
+                            "SELECT t.ID_Tarea, t.nombre_tarea, t.detalles, CONCAT(e.Nombre, ' ', e.Apellido) as empleado
                              FROM tarea t
-                             JOIN empleados e ON t.id_empleado = e.id_empleado
-                             WHERE t.id_empleado = $1
-                             ORDER BY t.id_tarea DESC", 
-                            array($idempleado)
+                             JOIN empleados e ON t.ID_Empleado = e.ID_Empleado
+                             WHERE t.ID_Empleado = ?
+                             ORDER BY t.ID_Tarea DESC"
                         );
+                        mysqli_stmt_bind_param($stmt, "i", $idempleado);
+                        mysqli_stmt_execute($stmt);
+                        $sql = mysqli_stmt_get_result($stmt);
                     } else {
                         // Para admin/líder, todas las tareas
-                        $sql = pg_query($conexion, 
-                            "SELECT t.id_tarea, t.id_empleado, t.nombre_tarea, t.detalles, e.nombre || ' ' || e.apellido as empleado
+                        $sql = mysqli_query($conexion, 
+                            "SELECT t.ID_Tarea, t.ID_Empleado, t.nombre_tarea, t.detalles, CONCAT(e.Nombre, ' ', e.Apellido) as empleado
                              FROM tarea t
-                             JOIN empleados e ON t.id_empleado = e.id_empleado
-                             ORDER BY t.id_tarea DESC"
+                             JOIN empleados e ON t.ID_Empleado = e.ID_Empleado
+                             ORDER BY t.ID_Tarea DESC"
                         );
                     }
 
-                    // ✅ CORREGIDO: Usar pg_fetch_object
-                    if ($sql && pg_num_rows($sql) > 0) {
-                        while ($datos = pg_fetch_object($sql)) { ?>
+                    // ✅ MySQL: Iteración
+                    if ($sql && mysqli_num_rows($sql) > 0) {
+                        while ($datos = mysqli_fetch_object($sql)) { ?>
                             <tr>
                                 <?php if ($_SESSION['id_rol'] != 3) { ?>
-                                    <td><?= htmlspecialchars($datos->id_tarea) ?></td>
+                                    <td><?= htmlspecialchars($datos->ID_Tarea) ?></td>
                                 <?php } ?>
                                 <td><?= htmlspecialchars($datos->empleado) ?></td>
                                 <td><?= htmlspecialchars($datos->nombre_tarea) ?></td>
@@ -194,10 +190,10 @@ include "../../controlador/tarea/eliminar_tarea.php";
                                 <?php if ($_SESSION['id_rol'] != 3) { ?>
                                     <td>
                                         <div class="botones-acciones">
-                                            <a href="modificarTarea.php?id=<?= $datos->id_tarea ?>" class="botoneditar">
+                                            <a href="modificarTarea.php?id=<?= $datos->ID_Tarea ?>" class="botoneditar">
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </a>
-                                            <a onclick="return eliminar()" href="listatarea.php?id=<?= $datos->id_tarea ?>" class="botoneliminar">
+                                            <a onclick="return eliminar()" href="listatarea.php?id=<?= $datos->ID_Tarea ?>" class="botoneliminar">
                                                 <i class="fa-solid fa-trash"></i>
                                             </a>
                                         </div>
@@ -205,6 +201,9 @@ include "../../controlador/tarea/eliminar_tarea.php";
                                 <?php } ?>
                             </tr>
                         <?php }
+                        if ($_SESSION['id_rol'] == 3 && isset($stmt)) {
+                            mysqli_stmt_close($stmt);
+                        }
                     } else {
                         $colspan = ($_SESSION['id_rol'] != 3) ? 5 : 3;
                         echo '<tr><td colspan="' . $colspan . '" class="text-center">No hay tareas registradas</td></tr>';

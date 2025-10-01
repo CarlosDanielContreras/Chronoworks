@@ -1,8 +1,4 @@
 <?php
-// ============================================
-// ARCHIVO: controlador/validarcuenta/validarusuario.php (MYSQL)
-// ============================================
-
 include_once(__DIR__ . '/../../modelo/Conexion.php');
 
 $tipoerror = "";

@@ -1,13 +1,14 @@
 <?php
-// ============================================
-// ARCHIVO: vista/empresa/modificarempresa.php
-// ============================================
 session_start();
 include "../../modelo/Conexion.php";
 
 $id = (int)$_GET['id'];
-// ✅ CORREGIDO: Usar pg_query_params
-$sql = pg_query_params($conexion, "SELECT * FROM empresa WHERE id_empresa = $1", array($id));
+
+// ✅ MySQL
+$stmt = mysqli_prepare($conexion, "SELECT * FROM empresa WHERE ID_Empresa = ?");
+mysqli_stmt_bind_param($stmt, "i", $id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -47,38 +48,38 @@ $sql = pg_query_params($conexion, "SELECT * FROM empresa WHERE id_empresa = $1",
                 <?php
                 include "../../controlador/empresa/modificar_empresa.php";
                 
-                // ✅ CORREGIDO: Usar pg_fetch_object
-                if ($sql && pg_num_rows($sql) > 0) {
-                    $datos = pg_fetch_object($sql);
+                // ✅ MySQL
+                if ($result && mysqli_num_rows($result) > 0) {
+                    $datos = mysqli_fetch_object($result);
                 ?>
                     <div class="row mb-3">
                         <div class="mb-3 col-6">
                             <label for="Nombre_Empresa" class="form-label">Nombre de la Empresa:</label>
-                            <input type="text" class="form-control" id="Nombre_Empresa" name="Nombre_Empresa" value="<?= htmlspecialchars($datos->nombre_empresa) ?>" required>
+                            <input type="text" class="form-control" id="Nombre_Empresa" name="Nombre_Empresa" value="<?= htmlspecialchars($datos->Nombre_Empresa) ?>" required>
                         </div>
                         <div class="mb-3 col-6">
                             <label for="Nit_Empresa" class="form-label">Nit de Empresa:</label>
-                            <input type="text" class="form-control" name="Nit_Empresa" id="Nit_Empresa" value="<?= htmlspecialchars($datos->nit_empresa) ?>" required>
+                            <input type="text" class="form-control" name="Nit_Empresa" id="Nit_Empresa" value="<?= htmlspecialchars($datos->Nit_Empresa) ?>" required>
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="mb-3 col-6">
                             <label for="Direccion" class="form-label">Dirección:</label>
-                            <input class="form-control" name="Direccion" id="Direccion" value="<?= htmlspecialchars($datos->direccion) ?>" required>
+                            <input class="form-control" name="Direccion" id="Direccion" value="<?= htmlspecialchars($datos->Direccion) ?>" required>
                         </div>
                         <div class="mb-3 col-6">
                             <label for="Telefono" class="form-label">Teléfono:</label>
-                            <input type="text" class="form-control" name="Telefono" id="Telefono" value="<?= htmlspecialchars($datos->telefono) ?>" required>
+                            <input type="text" class="form-control" name="Telefono" id="Telefono" value="<?= htmlspecialchars($datos->Telefono) ?>" required>
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="mb-3 col-6">
                             <label for="Sector" class="form-label">Sector:</label>
-                            <input type="text" class="form-control" name="Sector" id="Sector" value="<?= htmlspecialchars($datos->sector) ?>" required>
+                            <input type="text" class="form-control" name="Sector" id="Sector" value="<?= htmlspecialchars($datos->Sector) ?>" required>
                         </div>
                         <div class="mb-3 col-6">
                             <label for="Encargado" class="form-label">Encargado:</label>
-                            <input type="text" class="form-control" name="Encargado" id="Encargado" value="<?= htmlspecialchars($datos->encargado) ?>" required>
+                            <input type="text" class="form-control" name="Encargado" id="Encargado" value="<?= htmlspecialchars($datos->Encargado) ?>" required>
                         </div>
                     </div>
                     <div class="d-flex justify-content-center">
@@ -88,6 +89,7 @@ $sql = pg_query_params($conexion, "SELECT * FROM empresa WHERE id_empresa = $1",
                 } else {
                     echo '<div class="alert alert-danger">No se encontró la empresa</div>';
                 }
+                mysqli_stmt_close($stmt);
                 ?>
             </form>
         </div>

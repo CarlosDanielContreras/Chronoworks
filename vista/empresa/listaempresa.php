@@ -1,9 +1,5 @@
 <?php
-// ============================================
-// ARCHIVO: vista/empresa/listaempresa.php
-// ============================================
-?>
-<?php
+session_start();
 include "../../modelo/Conexion.php";
 include "../../controlador/empresa/registro_empresa.php";
 include "../../controlador/empresa/eliminar_empresa.php";
@@ -13,7 +9,7 @@ include "../../controlador/empresa/eliminar_empresa.php";
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Lista Empresas </title>
+    <title>Lista Empresas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../../css/listaempresa.css">
     <link rel="stylesheet" href="../../css/header.css">
@@ -70,7 +66,7 @@ include "../../controlador/empresa/eliminar_empresa.php";
             <h3 class="py-2 px-4 mx-2 shadow-sm text-center" style="background: linear-gradient(180deg, #4caed4 0%, #5d8ea1 100%);color: black; max-width: 300px; border-radius: 15px; border: 2px solid white; font-size: 1.2rem;">
                 Agregar Empresa
             </h3>
-            <a href="agregarempresa.php" class="boton d-flex justify-content-center align-items-center mx-auto mt-3" style="width: 150px; height: 40px; border-radius: 10px; font-size: 1rem;"> Agregar</a>
+            <a href="agregarempresa.php" class="boton d-flex justify-content-center align-items-center mx-auto mt-3" style="width: 150px; height: 40px; border-radius: 10px; font-size: 1rem;">Agregar</a>
         </div>
         <div class="col-md-6">
             <h3 class="py-2 px-3 mx-2 shadow-sm text-center" style="background: linear-gradient(180deg, #4caed4 0%, #5d8ea1 100%);color: black; max-width: 300px; border-radius: 15px; border: 2px solid white; font-size: 1.2rem;">
@@ -114,26 +110,25 @@ include "../../controlador/empresa/eliminar_empresa.php";
                 </thead>
                 <tbody>
                     <?php
-                    // ✅ CORREGIDO: Usar pg_query
-                    $sql = pg_query($conexion, "SELECT * FROM empresa ORDER BY id_empresa DESC");
+                    // ✅ MySQL
+                    $sql = mysqli_query($conexion, "SELECT * FROM empresa ORDER BY ID_Empresa DESC");
                     
-                    // ✅ CORREGIDO: Usar pg_fetch_object
-                    if ($sql && pg_num_rows($sql) > 0) {
-                        while ($datos = pg_fetch_object($sql)) { ?>
+                    if ($sql && mysqli_num_rows($sql) > 0) {
+                        while ($datos = mysqli_fetch_object($sql)) { ?>
                             <tr>
-                                <td><?= htmlspecialchars($datos->id_empresa) ?></td>
-                                <td><?= htmlspecialchars($datos->nombre_empresa) ?></td>
-                                <td><?= htmlspecialchars($datos->nit_empresa) ?></td>
-                                <td><?= htmlspecialchars($datos->direccion) ?></td>
-                                <td><?= htmlspecialchars($datos->telefono) ?></td>
-                                <td><?= htmlspecialchars($datos->sector) ?></td>
-                                <td><?= htmlspecialchars($datos->encargado) ?></td>
+                                <td><?= htmlspecialchars($datos->ID_Empresa) ?></td>
+                                <td><?= htmlspecialchars($datos->Nombre_Empresa) ?></td>
+                                <td><?= htmlspecialchars($datos->Nit_Empresa) ?></td>
+                                <td><?= htmlspecialchars($datos->Direccion) ?></td>
+                                <td><?= htmlspecialchars($datos->Telefono) ?></td>
+                                <td><?= htmlspecialchars($datos->Sector) ?></td>
+                                <td><?= htmlspecialchars($datos->Encargado) ?></td>
                                 <td>
                                     <div class="botones-acciones">
-                                        <a href="modificarempresa.php?id=<?= $datos->id_empresa ?>" class="botoneditar">
+                                        <a href="modificarempresa.php?id=<?= $datos->ID_Empresa ?>" class="botoneditar">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </a>
-                                        <a onclick="return eliminar()" href="listaempresa.php?id=<?= $datos->id_empresa ?>" class="botoneliminar">
+                                        <a onclick="return eliminar()" href="listaempresa.php?id=<?= $datos->ID_Empresa ?>" class="botoneliminar">
                                             <i class="fa-solid fa-trash"></i>
                                         </a>
                                     </div>

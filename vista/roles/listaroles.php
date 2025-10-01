@@ -1,10 +1,6 @@
 <?php
-// ============================================
-// ARCHIVO: vista/roles/listaroles.php (VERSIÓN CORREGIDA COMPLETA)
-// ============================================
 session_start();
 
-// Verificar si hay sesión activa
 if (!isset($_SESSION['id_rol'])) {
     header("Location: ../../login.php");
     exit();
@@ -148,42 +144,41 @@ include "../../controlador/roles/eliminar_roles.php";
                 </thead>
                 <tbody>
                     <?php
-                    // ✅ CORREGIDO: Consulta PostgreSQL según el rol
+                    // ✅ MySQL: Consulta según el rol
                     if ($_SESSION['id_rol'] == 3) {
-                        // Para agentes, obtener información de su rol desde credenciales
+                        // Para agentes, obtener su rol desde credenciales
                         $id_empleado = (int)$_SESSION['id_empleado'];
-                        $sql = pg_query_params($conexion, 
-                            "SELECT r.id_rol, r.nombre 
+                        $stmt = mysqli_prepare($conexion, 
+                            "SELECT r.ID_Rol, r.nombre 
                              FROM roles r
-                             INNER JOIN credenciales c ON c.id_rol = r.id_rol
-                             WHERE c.id_empleado = $1", 
-                            array($id_empleado)
+                             INNER JOIN credenciales c ON c.id_rol = r.ID_Rol
+                             WHERE c.ID_Empleado = ?"
                         );
+                        mysqli_stmt_bind_param($stmt, "i", $id_empleado);
+                        mysqli_stmt_execute($stmt);
+                        $sql = mysqli_stmt_get_result($stmt);
                     } else {
                         // Para admin/líder, mostrar todos los roles
-                        $sql = pg_query($conexion, "SELECT id_rol, nombre FROM roles ORDER BY id_rol");
+                        $sql = mysqli_query($conexion, "SELECT ID_Rol, nombre FROM roles ORDER BY ID_Rol");
                     }
 
-                    // ✅ Verificación completa antes de iterar
-                    if ($sql && pg_num_rows($sql) > 0) {
-                        while ($datos = pg_fetch_object($sql)) { 
-                            // ✅ Validar que $datos no sea null
-                            if ($datos === false) {
-                                continue;
-                            }
+                    // ✅ MySQL: Verificación e iteración
+                    if ($sql && mysqli_num_rows($sql) > 0) {
+                        while ($datos = mysqli_fetch_object($sql)) { 
+                            if ($datos === false) continue;
                             ?>
                             <tr>
                                 <?php if ($_SESSION['id_rol'] != 3) { ?>
-                                    <td><?= htmlspecialchars($datos->id_rol ?? '') ?></td>
+                                    <td><?= htmlspecialchars($datos->ID_Rol ?? '') ?></td>
                                 <?php } ?>
                                 <td><?= htmlspecialchars($datos->nombre ?? 'Sin nombre') ?></td>
                                 <?php if ($_SESSION['id_rol'] != 3) { ?>
                                     <td>
                                         <div class="botones-acciones">
-                                            <a href="modificarroles.php?id=<?= $datos->id_rol ?>" class="botoneditar">
+                                            <a href="modificarroles.php?id=<?= $datos->ID_Rol ?>" class="botoneditar">
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </a>
-                                            <a onclick="return eliminar()" href="listaroles.php?id=<?= $datos->id_rol ?>" class="botoneliminar">
+                                            <a onclick="return eliminar()" href="listaroles.php?id=<?= $datos->ID_Rol ?>" class="botoneliminar">
                                                 <i class="fa-solid fa-trash"></i>
                                             </a>
                                         </div>
@@ -191,6 +186,9 @@ include "../../controlador/roles/eliminar_roles.php";
                                 <?php } ?>
                             </tr>
                         <?php }
+                        if ($_SESSION['id_rol'] == 3 && isset($stmt)) {
+                            mysqli_stmt_close($stmt);
+                        }
                     } else {
                         $colspan = ($_SESSION['id_rol'] != 3) ? 3 : 1;
                         echo '<tr><td colspan="' . $colspan . '" class="text-center">No hay roles registrados</td></tr>';

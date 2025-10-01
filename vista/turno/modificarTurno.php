@@ -4,7 +4,7 @@ include "../../modelo/Conexion.php";
 
 $id = (int)$_GET['id'];
 
-// ✅ MySQL: Usar mysqli_prepare
+// ✅ MySQL
 $stmt = mysqli_prepare($conexion, "SELECT * FROM turno WHERE ID_Turno = ?");
 mysqli_stmt_bind_param($stmt, "i", $id);
 mysqli_stmt_execute($stmt);
@@ -49,7 +49,7 @@ $result = mysqli_stmt_get_result($stmt);
                 <?php
                 include "../../controlador/turno/modificar_turno.php";
                 
-                // ✅ MySQL: Usar mysqli_num_rows y mysqli_fetch_object
+                // ✅ MySQL
                 if ($result && mysqli_num_rows($result) > 0) {
                     $datos = mysqli_fetch_object($result);
                 ?>

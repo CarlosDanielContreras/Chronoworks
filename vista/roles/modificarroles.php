@@ -1,17 +1,16 @@
-
 <?php
-// ============================================
-// ARCHIVO: vista/roles/modificarroles.php
-// ============================================
-?>
-<?php
+session_start();
 include "../../modelo/Conexion.php";
-$id = $_GET['id'];
-// ✅ CORREGIDO: Usar pg_query_params para seguridad
-$sql = pg_query_params($conexion, "SELECT * FROM roles WHERE id_rol = $1", array($id));
+$id = (int)$_GET['id'];
+
+// ✅ MySQL
+$stmt = mysqli_prepare($conexion, "SELECT * FROM roles WHERE ID_Rol = ?");
+mysqli_stmt_bind_param($stmt, "i", $id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -48,25 +47,29 @@ $sql = pg_query_params($conexion, "SELECT * FROM roles WHERE id_rol = $1", array
                 <input type="hidden" name="id" value="<?= $_GET['id'] ?>">
                 <?php
                 include "../../controlador/roles/modificar_roles.php";
-                // ✅ CORREGIDO: Usar pg_fetch_object
-                if ($sql && pg_num_rows($sql) > 0) {
-                    while ($datos = pg_fetch_object($sql)) { ?>
-                        <div class="row mb-3 justify-content-center">
-                            <div class="col-4">
-                                <label for="nombre" class="form-label">Nombre:</label>
-                                <input type="text" class="form-control" id="nombre" placeholder="Nombre del Rol" name="nombre" value="<?= htmlspecialchars($datos->nombre) ?>" required>
-                            </div>
+                
+                // ✅ MySQL
+                if ($result && mysqli_num_rows($result) > 0) {
+                    $datos = mysqli_fetch_object($result);
+                ?>
+                    <div class="row mb-3 justify-content-center">
+                        <div class="col-4">
+                            <label for="nombre" class="form-label">Nombre:</label>
+                            <input type="text" class="form-control" id="nombre" placeholder="Nombre del Rol" name="nombre" value="<?= htmlspecialchars($datos->nombre) ?>" required>
                         </div>
-                    <?php }
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <button type="submit" class="btn btn-primary shadow py-2 px-4 fw-bold col-3" name="btnregistrar" value="ok">Actualizar</button>
+                    </div>
+                <?php
                 } else {
                     echo '<div class="alert alert-danger">No se encontró el rol</div>';
                 }
+                mysqli_stmt_close($stmt);
                 ?>
-                <div class="d-flex justify-content-center">
-                    <button type="submit" class="btn btn-primary shadow py-2 px-4 fw-bold col-3" name="btnregistrar" value="ok">Actualizar</button>
-                </div>
             </form>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

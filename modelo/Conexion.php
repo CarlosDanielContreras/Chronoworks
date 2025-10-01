@@ -15,10 +15,10 @@ if (session_status() === PHP_SESSION_NONE) {
 // ============================================
 // CONFIGURACIÓN - AJUSTA ESTOS VALORES
 // ============================================
-$host = "localhost";        // Tu servidor MySQL
-$dbname = "chronoworks";    // Nombre de tu base de datos
-$user = "root";             // Tu usuario MySQL
-$password = "";             // Tu contraseña MySQL
+$host = "sql207.infinityfree.com";        // Tu servidor MySQL
+$dbname = "if0_40069980_chronoworks";    // Nombre de tu base de datos
+$user = "if0_40069980";             // Tu usuario MySQL
+$password = "rwfSGA4mto4kl";             // Tu contraseña MySQL
 $port = 3306;
 
 // Conectar con mysqli

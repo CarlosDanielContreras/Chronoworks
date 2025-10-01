@@ -1,13 +1,14 @@
 <?php
-// ============================================
-// ARCHIVO: vista/tarea/modificarTarea.php (CORREGIDO)
-// ============================================
 session_start();
 include "../../modelo/Conexion.php";
 
 $id = (int)$_GET['id'];
-// ✅ CORREGIDO: Usar pg_query_params
-$sql = pg_query_params($conexion, "SELECT * FROM tarea WHERE id_tarea = $1", array($id));
+
+// ✅ MySQL
+$stmt = mysqli_prepare($conexion, "SELECT * FROM tarea WHERE ID_Tarea = ?");
+mysqli_stmt_bind_param($stmt, "i", $id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -47,9 +48,9 @@ $sql = pg_query_params($conexion, "SELECT * FROM tarea WHERE id_tarea = $1", arr
                 <?php
                 include "../../controlador/tarea/modificar_tarea.php";
                 
-                // ✅ CORREGIDO: Usar pg_fetch_object
-                if ($sql && pg_num_rows($sql) > 0) {
-                    $datos = pg_fetch_object($sql);
+                // ✅ MySQL
+                if ($result && mysqli_num_rows($result) > 0) {
+                    $datos = mysqli_fetch_object($result);
                 ?>
                     <div class="row mb-3">
                         <div class="col-6">
@@ -57,10 +58,11 @@ $sql = pg_query_params($conexion, "SELECT * FROM tarea WHERE id_tarea = $1", arr
                             <select class="form-control" id="ID_Empleado" name="ID_Empleado" required>
                                 <option value="">Seleccione un empleado</option>
                                 <?php
-                                $sql_empleados = pg_query($conexion, "SELECT id_empleado, nombre, apellido FROM empleados ORDER BY nombre");
-                                while ($emp = pg_fetch_object($sql_empleados)) {
-                                    $selected = ($emp->id_empleado == $datos->id_empleado) ? 'selected' : '';
-                                    echo "<option value='{$emp->id_empleado}' $selected>{$emp->nombre} {$emp->apellido}</option>";
+                                // ✅ MySQL
+                                $sql_empleados = mysqli_query($conexion, "SELECT ID_Empleado, Nombre, Apellido FROM empleados ORDER BY Nombre");
+                                while ($emp = mysqli_fetch_object($sql_empleados)) {
+                                    $selected = ($emp->ID_Empleado == $datos->ID_Empleado) ? 'selected' : '';
+                                    echo "<option value='{$emp->ID_Empleado}' $selected>{$emp->Nombre} {$emp->Apellido}</option>";
                                 }
                                 ?>
                             </select>
@@ -83,6 +85,7 @@ $sql = pg_query_params($conexion, "SELECT * FROM tarea WHERE id_tarea = $1", arr
                 } else {
                     echo '<div class="alert alert-danger">No se encontró la tarea</div>';
                 }
+                mysqli_stmt_close($stmt);
                 ?>
             </form>
         </div>
