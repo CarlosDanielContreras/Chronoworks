@@ -1,12 +1,6 @@
 <?php
-// ============================================
-// ARCHIVO 2: vista/campaña/modificarCampaña.php (MEJORADO)
-// ============================================
-?>
-<?php
 session_start();
 
-// Verificar permisos
 if (!isset($_SESSION['id_rol']) || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2)) {
     header("Location: ../../login.php");
     exit();
@@ -14,7 +8,6 @@ if (!isset($_SESSION['id_rol']) || ($_SESSION['id_rol'] != 1 && $_SESSION['id_ro
 
 include_once "../../modelo/Conexion.php";
 
-// Validar que el ID existe
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     $_SESSION['mensaje'] = '<div class="alert alert-danger">ID de campaña no especificado</div>';
     header("Location: listacampaña.php");
@@ -23,17 +16,21 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
 $id = (int)$_GET['id'];
 
-// Obtener datos de la campaña
-$sql = pg_query_params($conexion, "SELECT * FROM campania WHERE id_campania = $1", array($id));
+// ✅ MySQL
+$stmt = mysqli_prepare($conexion, "SELECT * FROM campania WHERE ID_Campania = ?");
+mysqli_stmt_bind_param($stmt, "i", $id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 
-// Verificar que la campaña existe
-if (!$sql || pg_num_rows($sql) == 0) {
+if (!$result || mysqli_num_rows($result) == 0) {
     $_SESSION['mensaje'] = '<div class="alert alert-danger">Campaña no encontrada</div>';
+    mysqli_stmt_close($stmt);
     header("Location: listacampaña.php");
     exit();
 }
 
-$datos = pg_fetch_object($sql);
+$datos = mysqli_fetch_object($result);
+mysqli_stmt_close($stmt);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -45,17 +42,6 @@ $datos = pg_fetch_object($sql);
     <link rel="stylesheet" href="../../css/modificar.css">
     <link rel="stylesheet" href="../../css/header.css">
     <script src="https://kit.fontawesome.com/8eb65f8551.js" crossorigin="anonymous"></script>
-    <style>
-        .alert-actualizar {
-            background-color: #d4edda;
-            border-color: #c3e6cb;
-            color: #155724;
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid transparent;
-            border-radius: 4px;
-        }
-    </style>
 </head>
 <body class="fondo">
     <header>
@@ -82,14 +68,13 @@ $datos = pg_fetch_object($sql);
     <div class="container">
         <div class="col-12">
             <?php
-            // Mostrar mensajes
             if (isset($_SESSION['mensaje'])) {
                 echo $_SESSION['mensaje'];
                 unset($_SESSION['mensaje']);
             }
             ?>
             
-            <form method="post" action="" id="formModificar" onsubmit="return validarFormulario()">
+            <form method="post" action="" id="formModificar">
                 <input type="hidden" name="id" value="<?= $id ?>">
                 
                 <?php include_once "../../controlador/campaña/modificar_campaña.php"; ?>
@@ -100,11 +85,12 @@ $datos = pg_fetch_object($sql);
                         <select class="form-control" name="idempresa" id="idempresa" required>
                             <option value="">Seleccione una empresa</option>
                             <?php
-                            $sql_empresas = pg_query($conexion, "SELECT id_empresa, nombre_empresa FROM empresa ORDER BY nombre_empresa");
+                            // ✅ MySQL
+                            $sql_empresas = mysqli_query($conexion, "SELECT ID_Empresa, Nombre_Empresa FROM empresa ORDER BY Nombre_Empresa");
                             if ($sql_empresas) {
-                                while ($empresa = pg_fetch_assoc($sql_empresas)) {
-                                    $selected = ($empresa['id_empresa'] == $datos->id_empresa) ? 'selected' : '';
-                                    echo "<option value='{$empresa['id_empresa']}' $selected>{$empresa['nombre_empresa']}</option>";
+                                while ($empresa = mysqli_fetch_assoc($sql_empresas)) {
+                                    $selected = ($empresa['ID_Empresa'] == $datos->ID_Empresa) ? 'selected' : '';
+                                    echo "<option value='{$empresa['ID_Empresa']}' $selected>{$empresa['Nombre_Empresa']}</option>";
                                 }
                             }
                             ?>
@@ -115,7 +101,7 @@ $datos = pg_fetch_object($sql);
                         <input type="text" class="form-control" id="campaña" 
                                placeholder="Nombre de la campaña" 
                                name="campaña" 
-                               value="<?= htmlspecialchars($datos->nombre_campania) ?>" 
+                               value="<?= htmlspecialchars($datos->Nombre_Campania) ?>" 
                                required maxlength="100">
                     </div>
                 </div>
@@ -125,17 +111,16 @@ $datos = pg_fetch_object($sql);
                         <label for="descripcion" class="form-label">Descripción: <span class="text-danger">*</span></label>
                         <textarea class="form-control" name="descripcion" id="descripcion" 
                                   placeholder="Descripción..." rows="4" required 
-                                  maxlength="500"><?= htmlspecialchars($datos->descripcion) ?></textarea>
-                        <small class="text-muted">Máximo 500 caracteres</small>
+                                  maxlength="500"><?= htmlspecialchars($datos->Descripcion) ?></textarea>
                     </div>
                     <div class="mb-3 col-6">
                         <label for="fechainicio" class="form-label">Fecha Inicio: <span class="text-danger">*</span></label>
                         <input type="date" class="form-control" name="fechainicio" id="fechainicio" 
-                               value="<?= $datos->fecha_inicio ?>" required>
+                               value="<?= $datos->Fecha_Inicio ?>" required>
                         
                         <label for="fechafin" class="form-label mt-3">Fecha Fin: <span class="text-danger">*</span></label>
                         <input type="date" class="form-control" name="fechafin" id="fechafin" 
-                               value="<?= $datos->fecha_fin ?>" required>
+                               value="<?= $datos->Fecha_Fin ?>" required>
                     </div>
                 </div>
                 
@@ -143,44 +128,16 @@ $datos = pg_fetch_object($sql);
                     <a href="listacampaña.php" class="btn btn-secondary shadow py-2 px-4 fw-bold col-3">Cancelar</a>
                     <button type="submit" class="btn btn-primary shadow py-2 px-4 fw-bold col-3" 
                             name="btnregistrar" value="ok">
-                        Actualizar Campaña
+                        Actualizar
                     </button>
                 </div>
             </form>
-            
-            <!-- Panel de depuración (quitar en producción) -->
-            <div class="mt-4 p-3 bg-light border" style="display: none;" id="debug">
-                <h5>Datos actuales:</h5>
-                <pre><?php print_r($datos); ?></pre>
-            </div>
         </div>
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function validarFormulario() {
-            // Validar empresa
-            const empresa = document.getElementById('idempresa').value;
-            if (!empresa) {
-                alert('Debe seleccionar una empresa');
-                return false;
-            }
-            
-            // Validar nombre
-            const nombre = document.getElementById('campaña').value.trim();
-            if (nombre.length < 3) {
-                alert('El nombre debe tener al menos 3 caracteres');
-                return false;
-            }
-            
-            // Validar descripción
-            const descripcion = document.getElementById('descripcion').value.trim();
-            if (descripcion.length < 10) {
-                alert('La descripción debe tener al menos 10 caracteres');
-                return false;
-            }
-            
-            // Validar fechas
             const fechaInicio = new Date(document.getElementById('fechainicio').value);
             const fechaFin = new Date(document.getElementById('fechafin').value);
             
@@ -189,12 +146,14 @@ $datos = pg_fetch_object($sql);
                 return false;
             }
             
-            // Confirmar actualización
             return confirm('¿Está seguro de actualizar esta campaña?');
         }
         
-        // Mostrar debug en consola
-        console.log('Datos de la campaña:', <?= json_encode($datos) ?>);
+        document.getElementById('formModificar').addEventListener('submit', function(e) {
+            if (!validarFormulario()) {
+                e.preventDefault();
+            }
+        });
     </script>
 </body>
 </html>

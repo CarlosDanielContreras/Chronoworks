@@ -1,4 +1,5 @@
 <?php
+session_start();
 include "../../modelo/Conexion.php";
 include "../../controlador/turno/registro_turno.php";
 include "../../controlador/turno/eliminar_turno.php";

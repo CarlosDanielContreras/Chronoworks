@@ -1,10 +1,6 @@
 <?php
-// ============================================
-// ARCHIVO: vista/credenciales/listacredenciales.php (VERSIÓN CORREGIDA COMPLETA)
-// ============================================
 session_start();
 
-// Verificar si hay sesión activa
 if (!isset($_SESSION['id_rol'])) {
     header("Location: ../../login.php");
     exit();
@@ -151,57 +147,59 @@ include "../../controlador/credenciales/eliminar_credenciales.php";
                 </thead>
                 <tbody>
                     <?php
-                    // ✅ CORREGIDO: Consulta PostgreSQL con validación completa
+                    // ✅ MySQL: Consulta según el rol
                     if ($_SESSION['id_rol'] == 3) {
                         // Para agentes, solo su cuenta
                         $idempleado = (int)$_SESSION['id_empleado'];
-                        $sql = pg_query_params($conexion, 
-                            "SELECT usuario, contrasena FROM credenciales WHERE id_empleado = $1", 
-                            array($idempleado)
+                        $stmt = mysqli_prepare($conexion, 
+                            "SELECT Usuario, Contrasena FROM credenciales WHERE ID_Empleado = ?"
                         );
+                        mysqli_stmt_bind_param($stmt, "i", $idempleado);
+                        mysqli_stmt_execute($stmt);
+                        $sql = mysqli_stmt_get_result($stmt);
                     } else {
                         // Para admin/líder, todas las cuentas con JOIN
-                        $sql = pg_query($conexion, 
-                            "SELECT c.id_credencial, c.usuario, c.contrasena, 
-                                    COALESCE(e.nombre, 'Sin asignar') AS empleado, 
+                        $sql = mysqli_query($conexion, 
+                            "SELECT c.ID_Credencial, c.Usuario, c.Contrasena, 
+                                    COALESCE(CONCAT(e.Nombre, ' ', e.Apellido), 'Sin asignar') AS empleado, 
                                     COALESCE(r.nombre, 'Sin rol') AS rol
                              FROM credenciales c
-                             LEFT JOIN empleados e ON e.id_empleado = c.id_empleado
-                             LEFT JOIN roles r ON r.id_rol = c.id_rol
-                             ORDER BY c.id_credencial DESC"
+                             LEFT JOIN empleados e ON e.ID_Empleado = c.ID_Empleado
+                             LEFT JOIN roles r ON r.ID_Rol = c.id_rol
+                             ORDER BY c.ID_Credencial DESC"
                         );
                     }
 
-                    // ✅ Verificación completa antes de iterar
-                    if ($sql && pg_num_rows($sql) > 0) {
-                        while ($datos = pg_fetch_object($sql)) { 
-                            // ✅ Validar que $datos no sea null
-                            if ($datos === false) {
-                                continue; // Saltar esta iteración si hay error
-                            }
+                    // ✅ MySQL: Verificación y iteración
+                    if ($sql && mysqli_num_rows($sql) > 0) {
+                        while ($datos = mysqli_fetch_object($sql)) { 
+                            if ($datos === false) continue;
                             ?>
                             <tr>
                                 <?php if ($_SESSION['id_rol'] != 3) { ?>
-                                    <td><?= htmlspecialchars($datos->usuario ?? '') ?></td>
+                                    <td><?= htmlspecialchars($datos->Usuario ?? '') ?></td>
                                     <td><?= str_repeat('*', 8) ?></td>
                                     <td><?= htmlspecialchars($datos->empleado ?? 'N/A') ?></td>
                                     <td><?= htmlspecialchars($datos->rol ?? 'N/A') ?></td>
                                     <td>
                                         <div class="botones-acciones">
-                                            <a href="modificarCredenciales.php?id=<?= $datos->id_credencial ?>" class="botoneditar">
+                                            <a href="modificarCredenciales.php?id=<?= $datos->ID_Credencial ?>" class="botoneditar">
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </a>
-                                            <a onclick="return eliminar()" href="listacredenciales.php?id=<?= $datos->id_credencial ?>" class="botoneliminar">
+                                            <a onclick="return eliminar()" href="listacredenciales.php?id=<?= $datos->ID_Credencial ?>" class="botoneliminar">
                                                 <i class="fa-solid fa-trash"></i>
                                             </a>
                                         </div>
                                     </td>
                                 <?php } else { ?>
-                                    <td><?= htmlspecialchars($datos->usuario ?? '') ?></td>
+                                    <td><?= htmlspecialchars($datos->Usuario ?? '') ?></td>
                                     <td><?= str_repeat('*', 8) ?></td>
                                 <?php } ?>
                             </tr>
                         <?php }
+                        if ($_SESSION['id_rol'] == 3 && isset($stmt)) {
+                            mysqli_stmt_close($stmt);
+                        }
                     } else {
                         $colspan = ($_SESSION['id_rol'] != 3) ? 5 : 2;
                         echo '<tr><td colspan="' . $colspan . '" class="text-center">No hay cuentas registradas</td></tr>';

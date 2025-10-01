@@ -1,13 +1,14 @@
 <?php
-// ============================================
-// ARCHIVO: vista/credenciales/modificarCredenciales.php
-// ============================================
 session_start();
 include "../../modelo/Conexion.php";
 
 $id = (int)$_GET['id'];
-// ✅ CORREGIDO: Usar pg_query_params
-$sql = pg_query_params($conexion, "SELECT * FROM credenciales WHERE id_credencial = $1", array($id));
+
+// ✅ MySQL
+$stmt = mysqli_prepare($conexion, "SELECT * FROM credenciales WHERE ID_Credencial = ?");
+mysqli_stmt_bind_param($stmt, "i", $id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -47,19 +48,19 @@ $sql = pg_query_params($conexion, "SELECT * FROM credenciales WHERE id_credencia
                 <?php
                 include "../../controlador/credenciales/modificar_credenciales.php";
                 
-                // ✅ CORREGIDO: Usar pg_fetch_object
-                if ($sql && pg_num_rows($sql) > 0) {
-                    $datos = pg_fetch_object($sql);
+                // ✅ MySQL
+                if ($result && mysqli_num_rows($result) > 0) {
+                    $datos = mysqli_fetch_object($result);
                 ?>
                     <div class="row mb-3">
                         <div class="col-6">
                             <label for="correo" class="form-label">Correo:</label>
-                            <input type="email" class="form-control" id="correo" placeholder="correo del empleado" name="correo" value="<?= htmlspecialchars($datos->usuario) ?>" required>
+                            <input type="email" class="form-control" id="correo" placeholder="correo del empleado" name="correo" value="<?= htmlspecialchars($datos->Usuario) ?>" required>
                         </div>
                         <div class="mb-3 col-6">
                             <label for="pwd" class="form-label">Contraseña:</label>
                             <input type="password" class="form-control" name="pwd" id="pwd" placeholder="Nueva contraseña" required>
-                            <small class="text-muted">Deja en blanco para mantener la contraseña actual</small>
+                            <small class="text-muted">Ingrese la nueva contraseña</small>
                         </div>
                     </div>
                     <div class="row mb-3">
@@ -68,10 +69,11 @@ $sql = pg_query_params($conexion, "SELECT * FROM credenciales WHERE id_credencia
                             <select class="form-control" id="idempleado" name="idempleado" required>
                                 <option value="">Seleccione un empleado</option>
                                 <?php
-                                $sql_empleados = pg_query($conexion, "SELECT id_empleado, nombre, apellido FROM empleados ORDER BY nombre");
-                                while ($emp = pg_fetch_object($sql_empleados)) {
-                                    $selected = ($emp->id_empleado == $datos->id_empleado) ? 'selected' : '';
-                                    echo "<option value='{$emp->id_empleado}' $selected>{$emp->nombre} {$emp->apellido}</option>";
+                                // ✅ MySQL
+                                $sql_empleados = mysqli_query($conexion, "SELECT ID_Empleado, Nombre, Apellido FROM empleados ORDER BY Nombre");
+                                while ($emp = mysqli_fetch_object($sql_empleados)) {
+                                    $selected = ($emp->ID_Empleado == $datos->ID_Empleado) ? 'selected' : '';
+                                    echo "<option value='{$emp->ID_Empleado}' $selected>{$emp->Nombre} {$emp->Apellido}</option>";
                                 }
                                 ?>
                             </select>
@@ -81,10 +83,11 @@ $sql = pg_query_params($conexion, "SELECT * FROM credenciales WHERE id_credencia
                             <select class="form-control" id="idrol" name="idrol" required>
                                 <option value="">Seleccione un rol</option>
                                 <?php
-                                $sql_roles = pg_query($conexion, "SELECT id_rol, nombre FROM roles ORDER BY id_rol");
-                                while ($rol = pg_fetch_object($sql_roles)) {
-                                    $selected = ($rol->id_rol == $datos->id_rol) ? 'selected' : '';
-                                    echo "<option value='{$rol->id_rol}' $selected>{$rol->nombre}</option>";
+                                // ✅ MySQL
+                                $sql_roles = mysqli_query($conexion, "SELECT ID_Rol, nombre FROM roles ORDER BY ID_Rol");
+                                while ($rol = mysqli_fetch_object($sql_roles)) {
+                                    $selected = ($rol->ID_Rol == $datos->id_rol) ? 'selected' : '';
+                                    echo "<option value='{$rol->ID_Rol}' $selected>{$rol->nombre}</option>";
                                 }
                                 ?>
                             </select>
@@ -97,6 +100,7 @@ $sql = pg_query_params($conexion, "SELECT * FROM credenciales WHERE id_credencia
                 } else {
                     echo '<div class="alert alert-danger">No se encontró la cuenta</div>';
                 }
+                mysqli_stmt_close($stmt);
                 ?>
             </form>
         </div>

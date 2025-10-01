@@ -1,21 +1,13 @@
 <?php
-// ============================================
-// ARCHIVO: vista/campaña/agregarcampaña.php (CORRECCIÓN FINAL)
-// ============================================
-
-// ✅ IMPORTANTE: Iniciar sesión PRIMERO
 session_start();
 
-// ✅ Verificar permisos
 if (!isset($_SESSION['id_rol']) || ($_SESSION['id_rol'] != 1 && $_SESSION['id_rol'] != 2)) {
     header("Location: ../../login.php");
     exit();
 }
 
-// ✅ CRÍTICO: Incluir conexión ANTES de cualquier otro include
 include_once "../../modelo/Conexion.php";
 
-// ✅ Verificar que la conexión existe
 if (!isset($conexion) || !$conexion) {
     die("Error: No se pudo establecer conexión con la base de datos");
 }
@@ -56,13 +48,11 @@ if (!isset($conexion) || !$conexion) {
     <div class="container">
         <div class="col-12">
             <?php
-            // ✅ Mostrar mensajes de sesión
             if (isset($_SESSION['mensaje'])) {
                 echo $_SESSION['mensaje'];
                 unset($_SESSION['mensaje']);
             }
             
-            // ✅ IMPORTANTE: Incluir el controlador DESPUÉS de tener la conexión
             include_once "../../controlador/campaña/registro_campaña.php";
             ?>
             
@@ -73,20 +63,19 @@ if (!isset($conexion) || !$conexion) {
                         <select class="form-control" name="idempresa" id="idempresa" required>
                             <option value="">Seleccione una empresa</option>
                             <?php
-                            // ✅ Cargar empresas con manejo de errores
-                            $sql_empresas = pg_query($conexion, "SELECT id_empresa, nombre_empresa FROM empresa ORDER BY nombre_empresa");
+                            // ✅ MySQL
+                            $sql_empresas = mysqli_query($conexion, "SELECT ID_Empresa, Nombre_Empresa FROM empresa ORDER BY Nombre_Empresa");
                             
                             if ($sql_empresas) {
-                                if (pg_num_rows($sql_empresas) > 0) {
-                                    while ($empresa = pg_fetch_assoc($sql_empresas)) {
-                                        echo "<option value='{$empresa['id_empresa']}'>{$empresa['nombre_empresa']}</option>";
+                                if (mysqli_num_rows($sql_empresas) > 0) {
+                                    while ($empresa = mysqli_fetch_assoc($sql_empresas)) {
+                                        echo "<option value='{$empresa['ID_Empresa']}'>{$empresa['Nombre_Empresa']}</option>";
                                     }
                                 } else {
                                     echo '<option value="" disabled>No hay empresas registradas</option>';
                                 }
                             } else {
                                 echo '<option value="" disabled>Error al cargar empresas</option>';
-                                error_log("Error al cargar empresas: " . pg_last_error($conexion));
                             }
                             ?>
                         </select>
@@ -135,7 +124,6 @@ if (!isset($conexion) || !$conexion) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../../js/main.js"></script>
     <script>
-        // Validación de fechas
         document.getElementById('formAgregar').addEventListener('submit', function(e) {
             const fechaInicio = document.getElementById('fechainicio').value;
             const fechaFin = document.getElementById('fechafin').value;
@@ -148,9 +136,6 @@ if (!isset($conexion) || !$conexion) {
                 }
             }
         });
-        
-        // Debug: ver datos antes de enviar
-        console.log('Formulario de agregar campaña cargado correctamente');
     </script>
 </body>
 </html>
