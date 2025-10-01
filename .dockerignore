@@ -1,0 +1,11 @@
+# Ignora archivos y carpetas innecesarios para la imagen Docker
+*.log
+*.zip
+img/
+node_modules/
+.git/
+.gitignore
+.vscode/
+README.md
+error.log
+video principal.mp4

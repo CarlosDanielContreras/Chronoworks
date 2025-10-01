@@ -1,0 +1,27 @@
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de logs y temporales
+*.log
+*.cache
+*.tmp
+*.bak
+
+# Configuración sensible
+.env
+*.env
+config.php
+
+# Dependencias de Composer
+/vendor/
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+
+# Archivos de PHPUnit
+.phpunit.result.cache
