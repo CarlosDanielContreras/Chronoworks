@@ -1,22 +1,27 @@
 <?php
 // ============================================
-// ARCHIVO: controlador/empresa/eliminar_empresa.php
+// ARCHIVO: controlador/empresa/eliminar_empresa.php (MYSQL)
 // ============================================
+
 if (!empty($_GET["id"])) {
     $id = (int)$_GET["id"];
     
-    // ✅ CORREGIDO: Usar pg_query_params
-    $query = "DELETE FROM empresa WHERE id_empresa = $1";
-    $result = pg_query_params($conexion, $query, array($id));
+    // ✅ MySQL
+    $stmt = mysqli_prepare($conexion, "DELETE FROM empresa WHERE ID_Empresa = ?");
     
-    if ($result && pg_affected_rows($result) > 0) {
-        $_SESSION['mensaje'] = '<div class="alert-message alert-eliminar">¡Empresa eliminada correctamente!</div>';
-        header("Location: listaempresa.php");
-        exit();
-    } else {
-        $_SESSION['mensaje'] = '<div class="alert alert-danger">Error al eliminar empresa</div>';
-        header("Location: listaempresa.php");
-        exit();
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "i", $id);
+        
+        if (mysqli_stmt_execute($stmt) && mysqli_stmt_affected_rows($stmt) > 0) {
+            $_SESSION['mensaje'] = '<div class="alert-message alert-eliminar">¡Empresa eliminada correctamente!</div>';
+        } else {
+            $_SESSION['mensaje'] = '<div class="alert alert-danger">Error al eliminar</div>';
+        }
+        
+        mysqli_stmt_close($stmt);
     }
+    
+    header("Location: listaempresa.php");
+    exit();
 }
 ?>

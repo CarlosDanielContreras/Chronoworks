@@ -1,22 +1,27 @@
 <?php
 // ============================================
-// ARCHIVO: controlador/roles/eliminar_roles.php
+// ARCHIVO: controlador/roles/eliminar_roles.php (MYSQL)
 // ============================================
+
 if (!empty($_GET["id"])) {
     $id = (int)$_GET["id"];
     
-    // ✅ CORREGIDO: Usar pg_query_params en lugar de $conexion->query()
-    $query = "DELETE FROM roles WHERE id_rol = $1";
-    $result = pg_query_params($conexion, $query, array($id));
+    // ✅ MySQL
+    $stmt = mysqli_prepare($conexion, "DELETE FROM roles WHERE ID_Rol = ?");
     
-    if ($result && pg_affected_rows($result) > 0) {
-        $_SESSION['mensaje'] = '<div class="alert-message alert-eliminar">¡Rol eliminado correctamente!</div>';
-        header("Location: listaroles.php");
-        exit();
-    } else {
-        $_SESSION['mensaje'] = '<div class="alert alert-danger">Error al eliminar rol: ' . pg_last_error($conexion) . '</div>';
-        header("Location: listaroles.php");
-        exit();
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "i", $id);
+        
+        if (mysqli_stmt_execute($stmt) && mysqli_stmt_affected_rows($stmt) > 0) {
+            $_SESSION['mensaje'] = '<div class="alert-message alert-eliminar">¡Rol eliminado correctamente!</div>';
+        } else {
+            $_SESSION['mensaje'] = '<div class="alert alert-danger">Error al eliminar</div>';
+        }
+        
+        mysqli_stmt_close($stmt);
     }
+    
+    header("Location: listaroles.php");
+    exit();
 }
 ?>

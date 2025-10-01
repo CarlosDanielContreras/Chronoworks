@@ -1,34 +1,47 @@
 <?php
+// ============================================
+// ARCHIVO: controlador/validarcuenta/validarusuario.php (MYSQL)
+// ============================================
+
 include_once(__DIR__ . '/../../modelo/Conexion.php');
+
 $tipoerror = "";
 $error_message = "";
 
 if (!empty($_POST["btniniciarsesion"]) && $_POST["btniniciarsesion"] === "ok") {
     if (!empty($_POST['correo']) && !empty($_POST['contraseña'])) {
 
-        $correo = escaparString($_POST['correo']);
+        $correo = mysqli_real_escape_string($conexion, $_POST['correo']);
         $contraseña = $_POST['contraseña'];
 
-        // CORREGIDO: Usar nombres de columnas en minúsculas
-        $query = "SELECT usuario, contrasena, id_rol, id_empleado FROM credenciales WHERE usuario = $1";
+        // Consulta preparada
+        $stmt = mysqli_prepare($conexion, 
+            "SELECT Usuario, Contrasena, id_rol, ID_Empleado FROM credenciales WHERE Usuario = ?"
+        );
         
-        $result = ejecutarQueryPreparada($query, array($correo));
+        mysqli_stmt_bind_param($stmt, "s", $correo);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
 
-        if ($result && pg_num_rows($result) > 0) {
-            $row = obtenerResultado($result);
-            $pwd = $row['contrasena'];
+        if ($result && mysqli_num_rows($result) > 0) {
+            $row = mysqli_fetch_assoc($result);
+            $pwd = $row['Contrasena'];
             $idrol = $row['id_rol'];
-            $idEmpleado = $row['id_empleado'];
+            $idEmpleado = $row['ID_Empleado'];
 
-            // Validar contraseña
-            if ($contraseña === $pwd) {
-                // Consulta para obtener el nombre del empleado
-                $queryEmpleado = "SELECT nombre FROM empleados WHERE id_empleado = $1";
-                $resultEmpleado = ejecutarQueryPreparada($queryEmpleado, array($idEmpleado));
+            // Validar contraseña (usar password_verify si están hasheadas)
+            if (password_verify($contraseña, $pwd) || $contraseña === $pwd) {
+                // Obtener nombre del empleado
+                $stmtEmp = mysqli_prepare($conexion, 
+                    "SELECT Nombre FROM empleados WHERE ID_Empleado = ?"
+                );
+                mysqli_stmt_bind_param($stmtEmp, "i", $idEmpleado);
+                mysqli_stmt_execute($stmtEmp);
+                $resultEmp = mysqli_stmt_get_result($stmtEmp);
 
-                if ($resultEmpleado && pg_num_rows($resultEmpleado) > 0) {
-                    $empleado = obtenerResultado($resultEmpleado);
-                    $nombreEmpleado = $empleado['nombre'];
+                if ($resultEmp && mysqli_num_rows($resultEmp) > 0) {
+                    $empleado = mysqli_fetch_assoc($resultEmp);
+                    $nombreEmpleado = $empleado['Nombre'];
 
                     // Iniciar sesión
                     session_start();
@@ -51,13 +64,13 @@ if (!empty($_POST["btniniciarsesion"]) && $_POST["btniniciarsesion"] === "ok") {
                         default:
                             $error_message = "Rol no reconocido.";
                             $tipoerror = "danger";
-                            break;
                     }
                     exit();
                 } else {
                     $error_message = "Empleado no encontrado.";
                     $tipoerror = "danger";
                 }
+                mysqli_stmt_close($stmtEmp);
             } else {
                 $error_message = "Contraseña incorrecta.";
                 $tipoerror = "danger";
@@ -66,6 +79,7 @@ if (!empty($_POST["btniniciarsesion"]) && $_POST["btniniciarsesion"] === "ok") {
             $error_message = "Usuario no encontrado.";
             $tipoerror = "secondary";
         }
+        mysqli_stmt_close($stmt);
     } else {
         $error_message = "Alguno de los campos está vacío, por favor diligencie todos los datos.";
         $tipoerror = "warning";

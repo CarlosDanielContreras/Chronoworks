@@ -1,30 +1,42 @@
 <?php
-session_start(); 
+// ============================================
+// ARCHIVO: controlador/asignacion/modificar_asignacion.php (MYSQL)
+// ============================================
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (!empty($_POST["btnregistrar"]) && $_POST["btnregistrar"] === "ok") {
-    if (!empty($_POST["idtarea"]) && !empty($_POST["idcampaña"]) && !empty($_POST["fechaasignacion"]) && !empty($_POST["observaciones"])) {
+    if (!empty($_POST["idtarea"]) && !empty($_POST["idcampaña"]) && 
+        !empty($_POST["fechaasignacion"]) && !empty($_POST["observaciones"])) {
 
-        $id = $_POST["id"];
-        $idtarea = $_POST["idtarea"];
-        $idcampaña = $_POST["idcampaña"];
+        $id = (int)$_POST["id"];
+        $idtarea = (int)$_POST["idtarea"];
+        $idcampania = (int)$_POST["idcampaña"];
         $fechaasignacion = $_POST["fechaasignacion"];
-        $observacion = $_POST["observaciones"];
+        $observacion = escaparString($_POST["observaciones"]);
 
-        $sql = $conexion->query("update asignacion set Id_tarea=$idtarea, Id_campaña=$idcampaña, fecha='$fechaasignacion', observaciones='$observacion' where id_Asignacion=$id");
-
-        if ($sql == 1) {
-            // Mensaje de éxito para la otra vista
-            $_SESSION['mensaje'] = '<div class="alert-message alert-actualizar">¡Asignación actualizada correctamente!</div>';
-            header("Location: listaasignacion.php"); // Redirigir a la otra vista
-            exit();
-        } else {
-            // Mensaje de error para la otra vista
-            $_SESSION['mensaje'] = '<div class="alert alert-danger">Error al actualizar la asignación</div>';
-            header("Location: listaasignacion.php"); // Redirigir a la otra vista
-            exit();
+        // ✅ MySQL
+        $stmt = mysqli_prepare($conexion,
+            "UPDATE asignacion SET Id_tarea=?, Id_campania=?, fecha=?, observaciones=? WHERE id_Asignacion=?"
+        );
+        
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "iissi", $idtarea, $idcampania, $fechaasignacion, $observacion, $id);
+            
+            if (mysqli_stmt_execute($stmt)) {
+                $_SESSION['mensaje'] = '<div class="alert-message alert-actualizar">¡Asignación actualizada correctamente!</div>';
+                header("Location: listaasignacion.php");
+                exit();
+            } else {
+                $_SESSION['mensaje'] = '<div class="alert alert-danger">Error al actualizar</div>';
+            }
+            
+            mysqli_stmt_close($stmt);
         }
-    }
-    else {
-        echo '<div class="alert alert-warning">Alguno de los campos está vacío, por favor diligencie todos los datos.</div>';
+    } else {
+        echo '<div class="alert alert-warning">Alguno de los campos está vacío.</div>';
     }
 }
+?>

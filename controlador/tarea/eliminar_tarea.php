@@ -1,22 +1,27 @@
 <?php
 // ============================================
-// ARCHIVO: controlador/tarea/eliminar_tarea.php
+// ARCHIVO: controlador/tarea/eliminar_tarea.php (MYSQL)
 // ============================================
+
 if (!empty($_GET["id"])) {
     $id = (int)$_GET["id"];
     
-    // ✅ CORREGIDO: Usar pg_query_params
-    $query = "DELETE FROM tarea WHERE id_tarea = $1";
-    $result = pg_query_params($conexion, $query, array($id));
+    // ✅ MySQL
+    $stmt = mysqli_prepare($conexion, "DELETE FROM tarea WHERE ID_Tarea = ?");
     
-    if ($result && pg_affected_rows($result) > 0) {
-        $_SESSION['mensaje'] = '<div class="alert-message alert-eliminar">¡Tarea eliminada correctamente!</div>';
-        header("Location: listatarea.php");
-        exit();
-    } else {
-        $_SESSION['mensaje'] = '<div class="alert alert-danger">Error al eliminar tarea</div>';
-        header("Location: listatarea.php");
-        exit();
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "i", $id);
+        
+        if (mysqli_stmt_execute($stmt) && mysqli_stmt_affected_rows($stmt) > 0) {
+            $_SESSION['mensaje'] = '<div class="alert-message alert-eliminar">¡Tarea eliminada correctamente!</div>';
+        } else {
+            $_SESSION['mensaje'] = '<div class="alert alert-danger">Error al eliminar</div>';
+        }
+        
+        mysqli_stmt_close($stmt);
     }
+    
+    header("Location: listatarea.php");
+    exit();
 }
 ?>

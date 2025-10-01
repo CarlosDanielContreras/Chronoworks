@@ -1,21 +1,27 @@
 <?php
 // ============================================
-// ARCHIVO: controlador/credenciales/eliminar_credenciales.php
+// ARCHIVO: controlador/credenciales/eliminar_credenciales.php (MYSQL)
 // ============================================
+
 if (!empty($_GET["id"])) {
     $id = (int)$_GET["id"];
     
-    $query = "DELETE FROM credenciales WHERE id_credencial = $1";
-    $result = pg_query_params($conexion, $query, array($id));
+    // ✅ MySQL
+    $stmt = mysqli_prepare($conexion, "DELETE FROM credenciales WHERE ID_Credencial = ?");
     
-    if ($result && pg_affected_rows($result) > 0) {
-        $_SESSION['mensaje'] = '<div class="alert-message alert-eliminar">¡Cuenta eliminada correctamente!</div>';
-        header("Location: listacredenciales.php");
-        exit();
-    } else {
-        $_SESSION['mensaje'] = '<div class="alert alert-danger">Error al eliminar cuenta: ' . pg_last_error($conexion) . '</div>';
-        header("Location: listacredenciales.php");
-        exit();
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "i", $id);
+        
+        if (mysqli_stmt_execute($stmt) && mysqli_stmt_affected_rows($stmt) > 0) {
+            $_SESSION['mensaje'] = '<div class="alert-message alert-eliminar">¡Cuenta eliminada correctamente!</div>';
+        } else {
+            $_SESSION['mensaje'] = '<div class="alert alert-danger">Error al eliminar</div>';
+        }
+        
+        mysqli_stmt_close($stmt);
     }
+    
+    header("Location: listacredenciales.php");
+    exit();
 }
 ?>

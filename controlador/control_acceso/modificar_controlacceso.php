@@ -1,8 +1,7 @@
 <?php
 // ============================================
-// ARCHIVO: controlador/control_acceso/modificar_controlacceso.php
+// ARCHIVO: controlador/control_acceso/modificar_controlacceso.php (MYSQL)
 // ============================================
-// ✅ ELIMINADO session_start()
 
 if (!empty($_POST["btnregistrar"]) && $_POST["btnregistrar"] === "ok") {
     if (!empty($_POST["idempleado"]) && !empty($_POST["fechaacceso"]) && 
@@ -14,22 +13,30 @@ if (!empty($_POST["btnregistrar"]) && $_POST["btnregistrar"] === "ok") {
         $fechaacceso = $_POST["fechaacceso"];
         $horaentrada = $_POST["horaentrada"];
         $horasalida = $_POST["horasalida"];
-        $observacion = $_POST["observaciones"];
+        $observacion = escaparString($_POST["observaciones"]);
 
-        $query = "UPDATE control_acceso SET id_empleado = $1, fecha = $2, hora_entrada = $3, hora_salida = $4, observacion = $5 WHERE id_control = $6";
-        $result = pg_query_params($conexion, $query, array($idempleado, $fechaacceso, $horaentrada, $horasalida, $observacion, $id));
-
-        if ($result && pg_affected_rows($result) > 0) {
-            $_SESSION['mensaje'] = '<div class="alert-message alert-actualizar">¡Acceso actualizado correctamente!</div>';
-            header("Location: listacontrol.php");
-            exit();
-        } else {
-            $_SESSION['mensaje'] = '<div class="alert alert-danger">Error al actualizar acceso: ' . pg_last_error($conexion) . '</div>';
-            header("Location: listacontrol.php");
-            exit();
+        // ✅ MySQL
+        $stmt = mysqli_prepare($conexion,
+            "UPDATE control_acceso SET id_Empleado=?, Fecha=?, Hora_Entrada=?, 
+             Hora_Salida=?, Observacion=? WHERE ID_Control=?"
+        );
+        
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "issssi", $idempleado, $fechaacceso, $horaentrada, 
+                                   $horasalida, $observacion, $id);
+            
+            if (mysqli_stmt_execute($stmt)) {
+                $_SESSION['mensaje'] = '<div class="alert-message alert-actualizar">¡Acceso actualizado correctamente!</div>';
+                header("Location: listacontrol.php");
+                exit();
+            } else {
+                $_SESSION['mensaje'] = '<div class="alert alert-danger">Error al actualizar</div>';
+            }
+            
+            mysqli_stmt_close($stmt);
         }
     } else {
-        echo '<div class="alert alert-warning">Alguno de los campos está vacío, por favor diligencie todos los datos.</div>';
+        echo '<div class="alert alert-warning">Todos los campos son obligatorios</div>';
     }
 }
 ?>

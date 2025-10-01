@@ -1,8 +1,8 @@
-
 <?php
 // ============================================
-// ARCHIVO: controlador/empresa/modificar_empresa.php
+// ARCHIVO: controlador/empresa/modificar_empresa.php (MYSQL)
 // ============================================
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -13,31 +13,35 @@ if (!empty($_POST["btnregistrar"]) && $_POST["btnregistrar"] === "ok") {
         !empty($_POST["Sector"]) && !empty($_POST["Encargado"])) {
 
         $id = (int)$_POST["id"];
-        $nombre_empresa = $_POST["Nombre_Empresa"];
-        $nit_empresa = $_POST["Nit_Empresa"];
-        $direccion = $_POST["Direccion"];
-        $telefono = $_POST["Telefono"];
-        $sector = $_POST["Sector"];
-        $encargado = $_POST["Encargado"];
+        $nombre_empresa = escaparString($_POST["Nombre_Empresa"]);
+        $nit_empresa = escaparString($_POST["Nit_Empresa"]);
+        $direccion = escaparString($_POST["Direccion"]);
+        $telefono = escaparString($_POST["Telefono"]);
+        $sector = escaparString($_POST["Sector"]);
+        $encargado = escaparString($_POST["Encargado"]);
 
-        // ✅ CORREGIDO: Usar pg_query_params
-        $query = "UPDATE empresa SET nombre_empresa = $1, nit_empresa = $2, direccion = $3, 
-                  telefono = $4, sector = $5, encargado = $6 WHERE id_empresa = $7";
+        // ✅ MySQL
+        $stmt = mysqli_prepare($conexion,
+            "UPDATE empresa SET Nombre_Empresa=?, Nit_Empresa=?, Direccion=?, 
+             Telefono=?, Sector=?, Encargado=? WHERE ID_Empresa=?"
+        );
         
-        $result = pg_query_params($conexion, $query, 
-            array($nombre_empresa, $nit_empresa, $direccion, $telefono, $sector, $encargado, $id));
-
-        if ($result && pg_affected_rows($result) > 0) {
-            $_SESSION['mensaje'] = '<div class="alert-message alert-actualizar">¡Empresa actualizada correctamente!</div>';
-            header("Location: listaempresa.php");
-            exit();
-        } else {
-            $_SESSION['mensaje'] = '<div class="alert alert-danger">Error al actualizar empresa</div>';
-            header("Location: listaempresa.php");
-            exit();
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "ssssssi", $nombre_empresa, $nit_empresa, $direccion, 
+                                   $telefono, $sector, $encargado, $id);
+            
+            if (mysqli_stmt_execute($stmt) && mysqli_stmt_affected_rows($stmt) > 0) {
+                $_SESSION['mensaje'] = '<div class="alert-message alert-actualizar">¡Empresa actualizada correctamente!</div>';
+                header("Location: listaempresa.php");
+                exit();
+            } else {
+                $_SESSION['mensaje'] = '<div class="alert alert-warning">No se realizaron cambios</div>';
+            }
+            
+            mysqli_stmt_close($stmt);
         }
     } else {
-        echo '<div class="alert alert-warning">Alguno de los campos está vacío, por favor diligencie todos los datos.</div>';
+        echo '<div class="alert alert-warning">Todos los campos son obligatorios</div>';
     }
 }
 ?>

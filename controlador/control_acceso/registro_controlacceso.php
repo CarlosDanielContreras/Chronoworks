@@ -1,8 +1,7 @@
 <?php
 // ============================================
-// ARCHIVO: controlador/control_acceso/registro_controlacceso.php
+// ARCHIVO: controlador/control_acceso/registro_controlacceso.php (MYSQL)
 // ============================================
-// ✅ ELIMINADO session_start()
 
 if (!empty($_POST["btnregistrar"]) && $_POST["btnregistrar"] === "ok") {
     if (!empty($_POST["idempleado"]) && !empty($_POST["fechaacceso"]) && 
@@ -13,22 +12,29 @@ if (!empty($_POST["btnregistrar"]) && $_POST["btnregistrar"] === "ok") {
         $fechaacceso = $_POST["fechaacceso"];
         $horaentrada = $_POST["horaentrada"];
         $horasalida = $_POST["horasalida"];
-        $observacion = $_POST["observaciones"];
+        $observacion = escaparString($_POST["observaciones"]);
 
-        $query = "INSERT INTO control_acceso (id_empleado, fecha, hora_entrada, hora_salida, observacion) VALUES ($1, $2, $3, $4, $5)";
-        $result = pg_query_params($conexion, $query, array($idempleado, $fechaacceso, $horaentrada, $horasalida, $observacion));
-
-        if ($result) {
-            $_SESSION['mensaje'] = '<div class="alert-message alert-registro">¡Acceso registrado correctamente!</div>';
-            header("Location: listacontrol.php");
-            exit();
-        } else {
-            $_SESSION['mensaje'] = '<div class="alert alert-danger">Error al registrar acceso: ' . pg_last_error($conexion) . '</div>';
-            header("Location: listacontrol.php");
-            exit();
+        // ✅ MySQL
+        $stmt = mysqli_prepare($conexion,
+            "INSERT INTO control_acceso (id_Empleado, Fecha, Hora_Entrada, Hora_Salida, Observacion)
+             VALUES (?, ?, ?, ?, ?)"
+        );
+        
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "issss", $idempleado, $fechaacceso, $horaentrada, $horasalida, $observacion);
+            
+            if (mysqli_stmt_execute($stmt)) {
+                $_SESSION['mensaje'] = '<div class="alert-message alert-registro">¡Acceso registrado correctamente!</div>';
+                header("Location: listacontrol.php");
+                exit();
+            } else {
+                $_SESSION['mensaje'] = '<div class="alert alert-danger">Error al registrar</div>';
+            }
+            
+            mysqli_stmt_close($stmt);
         }
     } else {
-        echo '<div class="alert alert-warning">Alguno de los campos está vacío, por favor diligencie todos los datos.</div>';
+        echo '<div class="alert alert-warning">Todos los campos son obligatorios</div>';
     }
 }
 ?>

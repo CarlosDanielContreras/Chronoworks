@@ -1,22 +1,27 @@
 <?php
 // ============================================
-// ARCHIVO: controlador/turno/eliminar_turno.php
+// ARCHIVO: controlador/turno/eliminar_turno.php (MYSQL)
 // ============================================
+
 if (!empty($_GET["id"])) {
     $id = (int)$_GET["id"];
     
-    // ✅ CORREGIDO: Usar pg_query_params
-    $query = "DELETE FROM turno WHERE id_turno = $1";
-    $result = pg_query_params($conexion, $query, array($id));
+    // ✅ MySQL
+    $stmt = mysqli_prepare($conexion, "DELETE FROM turno WHERE ID_Turno = ?");
     
-    if ($result && pg_affected_rows($result) > 0) {
-        $_SESSION['mensaje'] = '<div class="alert-message alert-eliminar">¡Turno eliminado correctamente!</div>';
-        header("Location: listaturno.php");
-        exit();
-    } else {
-        $_SESSION['mensaje'] = '<div class="alert alert-danger">Error al eliminar turno</div>';
-        header("Location: listaturno.php");
-        exit();
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "i", $id);
+        
+        if (mysqli_stmt_execute($stmt) && mysqli_stmt_affected_rows($stmt) > 0) {
+            $_SESSION['mensaje'] = '<div class="alert-message alert-eliminar">¡Turno eliminado correctamente!</div>';
+        } else {
+            $_SESSION['mensaje'] = '<div class="alert alert-danger">Error al eliminar</div>';
+        }
+        
+        mysqli_stmt_close($stmt);
     }
+    
+    header("Location: listaturno.php");
+    exit();
 }
 ?>
