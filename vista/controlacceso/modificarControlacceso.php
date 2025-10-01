@@ -1,12 +1,14 @@
 <?php
-// ============================================
-// ARCHIVO: vista/controlacceso/modificarControlacceso.php (VERSIÓN CORREGIDA FINAL)
-// ============================================
 session_start();
 include "../../modelo/Conexion.php";
 
 $id = (int)$_GET['id'];
-$sql = pg_query_params($conexion, "SELECT * FROM control_acceso WHERE id_control = $1", array($id));
+
+// ✅ MySQL: Usar mysqli_prepare
+$stmt = mysqli_prepare($conexion, "SELECT * FROM control_acceso WHERE ID_Control = ?");
+mysqli_stmt_bind_param($stmt, "i", $id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -35,10 +37,11 @@ $sql = pg_query_params($conexion, "SELECT * FROM control_acceso WHERE id_control
             </div>
         </div>
     </header>
-    <h2 class="text-center py-3 px-4 mx-auto shadow-sm"
-        style="color: black; max-width: 400px; margin-top: 2rem; margin-bottom: 2rem; border-radius: 15px; border: solid 2px; border-color: white;">
+    
+    <h2 class="text-center py-3 px-4 mx-auto shadow-sm" style="color: black; max-width: 400px; margin-top: 2rem; margin-bottom: 2rem; border-radius: 15px; border: solid 2px; border-color: white;">
         Modificar Acceso
     </h2>
+    
     <div class="container">
         <div class="col-12">
             <form method="post">
@@ -46,8 +49,9 @@ $sql = pg_query_params($conexion, "SELECT * FROM control_acceso WHERE id_control
                 <?php
                 include "../../controlador/control_acceso/modificar_controlacceso.php";
                 
-                if ($sql && pg_num_rows($sql) > 0) {
-                    $datos = pg_fetch_object($sql);
+                // ✅ MySQL: Usar mysqli_num_rows y mysqli_fetch_object
+                if ($result && mysqli_num_rows($result) > 0) {
+                    $datos = mysqli_fetch_object($result);
                 ?>
                     <div class="row mb-3">
                         <div class="col-6">
@@ -55,35 +59,38 @@ $sql = pg_query_params($conexion, "SELECT * FROM control_acceso WHERE id_control
                             <select class="form-control" id="idempleado" name="idempleado" required>
                                 <option value="">Seleccione un empleado</option>
                                 <?php
-                                $sql_empleados = pg_query($conexion, "SELECT id_empleado, nombre, apellido FROM empleados ORDER BY nombre");
-                                while ($empleado = pg_fetch_object($sql_empleados)) {
-                                    $selected = ($empleado->id_empleado == $datos->id_empleado) ? 'selected' : '';
-                                    echo "<option value='{$empleado->id_empleado}' $selected>{$empleado->nombre} {$empleado->apellido}</option>";
+                                $sql_empleados = mysqli_query($conexion, "SELECT ID_Empleado, Nombre, Apellido FROM empleados ORDER BY Nombre");
+                                while ($emp = mysqli_fetch_object($sql_empleados)) {
+                                    $selected = ($emp->ID_Empleado == $datos->id_Empleado) ? 'selected' : '';
+                                    echo "<option value='{$emp->ID_Empleado}' $selected>{$emp->Nombre} {$emp->Apellido}</option>";
                                 }
                                 ?>
                             </select>
                         </div>
                         <div class="mb-3 col-6">
                             <label for="fechaacceso" class="form-label">Fecha del Acceso:</label>
-                            <input type="date" class="form-control" name="fechaacceso" id="fechaacceso" value="<?= htmlspecialchars($datos->fecha) ?>" required>
+                            <input type="date" class="form-control" name="fechaacceso" id="fechaacceso" value="<?= htmlspecialchars($datos->Fecha) ?>" required>
                         </div>
                     </div>
+                    
                     <div class="row mb-3">
                         <div class="mb-3 col-6">
                             <label for="horaentrada" class="form-label">Hora de Entrada:</label>
-                            <input type="time" class="form-control" name="horaentrada" id="horaentrada" value="<?= htmlspecialchars($datos->hora_entrada) ?>" required>
+                            <input type="time" class="form-control" name="horaentrada" id="horaentrada" value="<?= htmlspecialchars($datos->Hora_Entrada) ?>" required>
                         </div>
                         <div class="mb-3 col-6">
                             <label for="horasalida" class="form-label">Hora de Salida:</label>
-                            <input type="time" class="form-control" name="horasalida" id="horasalida" value="<?= htmlspecialchars($datos->hora_salida) ?>" required>
+                            <input type="time" class="form-control" name="horasalida" id="horasalida" value="<?= htmlspecialchars($datos->Hora_Salida) ?>" required>
                         </div>
                     </div>
+                    
                     <div class="row mb-3">
                         <div class="mb-3 col-12">
                             <label for="observaciones" class="form-label">Observaciones:</label>
-                            <textarea class="form-control" name="observaciones" id="observaciones" rows="3" required><?= htmlspecialchars($datos->observacion) ?></textarea>
+                            <textarea class="form-control" name="observaciones" id="observaciones" rows="3" required><?= htmlspecialchars($datos->Observacion) ?></textarea>
                         </div>
                     </div>
+                    
                     <div class="d-flex justify-content-center">
                         <button type="submit" class="btn btn-primary shadow py-2 px-4 fw-bold col-5" name="btnregistrar" value="ok">Actualizar</button>
                     </div>
@@ -91,10 +98,12 @@ $sql = pg_query_params($conexion, "SELECT * FROM control_acceso WHERE id_control
                 } else {
                     echo '<div class="alert alert-danger">No se encontró el registro de acceso</div>';
                 }
+                mysqli_stmt_close($stmt);
                 ?>
             </form>
         </div>
     </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

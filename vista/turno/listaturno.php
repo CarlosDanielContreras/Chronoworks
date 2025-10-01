@@ -1,9 +1,4 @@
 <?php
-// ============================================
-// ARCHIVO: vista/turno/listaturno.php
-// ============================================
-?>
-<?php
 include "../../modelo/Conexion.php";
 include "../../controlador/turno/registro_turno.php";
 include "../../controlador/turno/eliminar_turno.php";
@@ -15,7 +10,7 @@ $id_usuario = $_SESSION['id_empleado'];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Lista Turnos </title>
+    <title>Lista Turnos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../../css/listaturno.css">
     <link rel="stylesheet" href="../../css/header.css">
@@ -45,6 +40,7 @@ $id_usuario = $_SESSION['id_empleado'];
                                     </ul>
                                 </li>
                             <?php endif; ?>
+                            
                             <?php if ($_SESSION['id_rol'] === 1) : ?>
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle text-light fw-semibold" href="#" role="button" data-bs-toggle="dropdown">Servicios 2</a>
@@ -62,6 +58,7 @@ $id_usuario = $_SESSION['id_empleado'];
                                     </ul>
                                 </li>
                             <?php endif; ?>
+                            
                             <?php if ($_SESSION['id_rol'] === 3) : ?>
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle text-light fw-semibold" href="#" role="button" data-bs-toggle="dropdown">Servicios 1</a>
@@ -80,6 +77,7 @@ $id_usuario = $_SESSION['id_empleado'];
                                 </li>
                             <?php endif; ?>
                         </ul>
+                        
                         <a href="<?php
                             if ($_SESSION['id_rol'] == 3) echo "../../agente.php";
                             elseif ($_SESSION['id_rol'] == 1) echo "../../admin.php";
@@ -98,7 +96,7 @@ $id_usuario = $_SESSION['id_empleado'];
                 <h3 class="py-2 px-4 mx-2 shadow-sm text-center" style="background: linear-gradient(180deg, #4caed4 0%, #5d8ea1 100%);color: black; max-width: 300px; border-radius: 15px; border: 2px solid white; font-size: 1.2rem;">
                     Agregar Turno
                 </h3>
-                <a href="agregarturno.php" class="boton d-flex justify-content-center align-items-center mx-auto mt-3" style="width: 150px; height: 40px; border-radius: 10px; font-size: 1rem;"> Agregar</a>
+                <a href="agregarturno.php" class="boton d-flex justify-content-center align-items-center mx-auto mt-3" style="width: 150px; height: 40px; border-radius: 10px; font-size: 1rem;">Agregar</a>
             </div>
             <div class="col-md-6">
                 <h3 class="py-2 px-3 mx-2 shadow-sm text-center" style="background: linear-gradient(180deg, #4caed4 0%, #5d8ea1 100%);color: black; max-width: 300px; border-radius: 15px; border: 2px solid white; font-size: 1.2rem;">
@@ -139,38 +137,46 @@ $id_usuario = $_SESSION['id_empleado'];
                 </thead>
                 <tbody>
                     <?php
-                    // ✅ CORREGIDO: Usar pg_query
+                    // ✅ MySQL: Consulta según el rol
                     if ($rol === 3) {
-                        $sql = pg_query_params($conexion, 
-                            "SELECT e.id_turno, t.hora_entrada, t.hora_salida
+                        // Para agentes, solo su turno
+                        $stmt = mysqli_prepare($conexion, 
+                            "SELECT e.id_turno, t.Hora_Entrada, t.Hora_Salida
                              FROM empleados e 
-                             JOIN turno t ON e.id_turno = t.id_turno
-                             WHERE e.id_empleado = $1", 
-                            array($id_usuario)
+                             JOIN turno t ON e.id_turno = t.ID_Turno
+                             WHERE e.ID_Empleado = ?"
                         );
+                        mysqli_stmt_bind_param($stmt, "i", $id_usuario);
+                        mysqli_stmt_execute($stmt);
+                        $sql = mysqli_stmt_get_result($stmt);
                     } else {
-                        $sql = pg_query($conexion, "SELECT * FROM turno ORDER BY id_turno");
+                        // Para admin/líder, todos los turnos
+                        $sql = mysqli_query($conexion, "SELECT * FROM turno ORDER BY ID_Turno");
                     }
                     
-                    // ✅ CORREGIDO: Usar pg_fetch_object
-                    if ($sql && pg_num_rows($sql) > 0) {
-                        while ($datos = pg_fetch_object($sql)) { ?>
+                    // ✅ MySQL: Usar mysqli_num_rows y mysqli_fetch_object
+                    if ($sql && mysqli_num_rows($sql) > 0) {
+                        while ($datos = mysqli_fetch_object($sql)) { ?>
                             <tr>
-                                <td>
+                                <td class="id-turno-columna">
                                     <?php
                                     // Mostrar el ID_Turno según el rol
-                                    echo htmlspecialchars($datos->id_turno);
+                                    if ($rol === 3) {
+                                        echo htmlspecialchars($datos->id_turno);
+                                    } else {
+                                        echo htmlspecialchars($datos->ID_Turno);
+                                    }
                                     ?>
                                 </td>
-                                <td><?= htmlspecialchars($datos->hora_entrada) ?></td>
-                                <td><?= htmlspecialchars($datos->hora_salida) ?></td>
+                                <td><?= htmlspecialchars($rol === 3 ? $datos->Hora_Entrada : $datos->Hora_Entrada) ?></td>
+                                <td><?= htmlspecialchars($rol === 3 ? $datos->Hora_Salida : $datos->Hora_Salida) ?></td>
                                 <td class="acciones-columna">
                                     <?php if ($_SESSION['id_rol'] != 3) : ?>
                                         <div class="botones-acciones">
-                                            <a href="modificarTurno.php?id=<?= $datos->id_turno ?>" class="botoneditar">
+                                            <a href="modificarTurno.php?id=<?= $datos->ID_Turno ?>" class="botoneditar">
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </a>
-                                            <a onclick="return eliminar()" href="listaturno.php?id=<?= $datos->id_turno ?>" class="botoneliminar">
+                                            <a onclick="return eliminar()" href="listaturno.php?id=<?= $datos->ID_Turno ?>" class="botoneliminar">
                                                 <i class="fa-solid fa-trash"></i>
                                             </a>
                                         </div>
@@ -178,6 +184,9 @@ $id_usuario = $_SESSION['id_empleado'];
                                 </td>
                             </tr>
                         <?php }
+                        if ($rol === 3 && isset($stmt)) {
+                            mysqli_stmt_close($stmt);
+                        }
                     } else {
                         echo '<tr><td colspan="4" class="text-center">No hay turnos registrados</td></tr>';
                     }
@@ -186,6 +195,7 @@ $id_usuario = $_SESSION['id_empleado'];
             </table>
         </div>
     </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../../js/main.js"></script>
 </body>

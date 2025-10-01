@@ -14,7 +14,7 @@ if (!empty($_POST["btniniciarsesion"]) && $_POST["btniniciarsesion"] === "ok") {
         $correo = mysqli_real_escape_string($conexion, $_POST['correo']);
         $contraseña = $_POST['contraseña'];
 
-        // Consulta preparada
+        // ✅ MySQL: Consulta preparada
         $stmt = mysqli_prepare($conexion, 
             "SELECT Usuario, Contrasena, id_rol, ID_Empleado FROM credenciales WHERE Usuario = ?"
         );
@@ -29,8 +29,8 @@ if (!empty($_POST["btniniciarsesion"]) && $_POST["btniniciarsesion"] === "ok") {
             $idrol = $row['id_rol'];
             $idEmpleado = $row['ID_Empleado'];
 
-            // Validar contraseña (usar password_verify si están hasheadas)
-            if (password_verify($contraseña, $pwd) || $contraseña === $pwd) {
+            // Validar contraseña
+            if (password_verify($contraseña, $pwd)) {
                 // Obtener nombre del empleado
                 $stmtEmp = mysqli_prepare($conexion, 
                     "SELECT Nombre FROM empleados WHERE ID_Empleado = ?"

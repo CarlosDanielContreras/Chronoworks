@@ -1,13 +1,14 @@
 <?php
-// ============================================
-// ARCHIVO: vista/turno/modificarTurno.php
-// ============================================
 session_start();
 include "../../modelo/Conexion.php";
 
 $id = (int)$_GET['id'];
-// ✅ CORREGIDO: Usar pg_query_params
-$sql = pg_query_params($conexion, "SELECT * FROM turno WHERE id_turno = $1", array($id));
+
+// ✅ MySQL: Usar mysqli_prepare
+$stmt = mysqli_prepare($conexion, "SELECT * FROM turno WHERE ID_Turno = ?");
+mysqli_stmt_bind_param($stmt, "i", $id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -36,10 +37,11 @@ $sql = pg_query_params($conexion, "SELECT * FROM turno WHERE id_turno = $1", arr
             </div>
         </div>
     </header>
-    <h2 class="text-center py-3 px-4 mx-auto shadow-sm"
-        style="color: black; max-width: 400px; margin-top: 2rem; margin-bottom: 2rem; border-radius: 15px; border: solid 2px; border-color: white;">
+    
+    <h2 class="text-center py-3 px-4 mx-auto shadow-sm" style="color: black; max-width: 400px; margin-top: 2rem; margin-bottom: 2rem; border-radius: 15px; border: solid 2px; border-color: white;">
         Modificar Turno
     </h2>
+    
     <div class="container">
         <div class="col-12">
             <form method="post">
@@ -47,20 +49,21 @@ $sql = pg_query_params($conexion, "SELECT * FROM turno WHERE id_turno = $1", arr
                 <?php
                 include "../../controlador/turno/modificar_turno.php";
                 
-                // ✅ CORREGIDO: Usar pg_fetch_object
-                if ($sql && pg_num_rows($sql) > 0) {
-                    $datos = pg_fetch_object($sql);
+                // ✅ MySQL: Usar mysqli_num_rows y mysqli_fetch_object
+                if ($result && mysqli_num_rows($result) > 0) {
+                    $datos = mysqli_fetch_object($result);
                 ?>
                     <div class="row mb-3">
                         <div class="mb-3 col-6">
                             <label for="horaentrada" class="form-label">Hora de Entrada:</label>
-                            <input type="time" class="form-control" name="horaentrada" id="horaentrada" value="<?= htmlspecialchars($datos->hora_entrada) ?>" required>
+                            <input type="time" class="form-control" name="horaentrada" id="horaentrada" value="<?= htmlspecialchars($datos->Hora_Entrada) ?>" required>
                         </div>
                         <div class="mb-3 col-6">
                             <label for="horasalida" class="form-label">Hora de Salida:</label>
-                            <input type="time" class="form-control" name="horasalida" id="horasalida" value="<?= htmlspecialchars($datos->hora_salida) ?>" required>
+                            <input type="time" class="form-control" name="horasalida" id="horasalida" value="<?= htmlspecialchars($datos->Hora_Salida) ?>" required>
                         </div>
                     </div>
+                    
                     <div class="d-flex justify-content-center">
                         <button type="submit" class="btn btn-primary shadow py-2 px-4 fw-bold col-5" name="btnregistrar" value="ok">Actualizar</button>
                     </div>
@@ -68,10 +71,12 @@ $sql = pg_query_params($conexion, "SELECT * FROM turno WHERE id_turno = $1", arr
                 } else {
                     echo '<div class="alert alert-danger">No se encontró el turno</div>';
                 }
+                mysqli_stmt_close($stmt);
                 ?>
             </form>
         </div>
     </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

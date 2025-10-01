@@ -1,12 +1,6 @@
 <?php
-// ============================================
-// ARCHIVO: vista/controlacceso/listacontrol.php
-// ============================================
-
-// ✅ SOLUCIÓN: Iniciar sesión ANTES de usar $_SESSION
 session_start();
 
-// Verificar que el usuario esté logueado
 if (!isset($_SESSION['id_rol'])) {
     header("Location: ../../login.php");
     exit();
@@ -45,7 +39,7 @@ $rol = $_SESSION['id_rol'];
                         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                             <?php if ($_SESSION['id_rol'] != 3) : ?>
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle text-light fw-semibold" href="#" id="campanasDropdown" role="button" data-bs-toggle="dropdown">
+                                    <a class="nav-link dropdown-toggle text-light fw-semibold" href="#" role="button" data-bs-toggle="dropdown">
                                         <?php echo ($_SESSION['id_rol'] === 2) ? 'Servicios' : 'Servicios 1'; ?>
                                     </a>
                                     <ul class="dropdown-menu">
@@ -54,11 +48,10 @@ $rol = $_SESSION['id_rol'];
                                     </ul>
                                 </li>
                             <?php endif; ?>
+                            
                             <?php if ($_SESSION['id_rol'] === 1) : ?>
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle text-light fw-semibold" href="#" role="button" data-bs-toggle="dropdown">
-                                        Servicios 2
-                                    </a>
+                                    <a class="nav-link dropdown-toggle text-light fw-semibold" href="#" role="button" data-bs-toggle="dropdown">Servicios 2</a>
                                     <ul class="dropdown-menu">
                                         <li><a class="dropdown-item" href="../empleados/listaempleados.php">Empleados</a></li>
                                         <li><a class="dropdown-item" href="../empresa/listaempresa.php">Empresa</a></li>
@@ -66,9 +59,7 @@ $rol = $_SESSION['id_rol'];
                                     </ul>
                                 </li>
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle text-light fw-semibold" href="#" role="button" data-bs-toggle="dropdown">
-                                        Servicios 3
-                                    </a>
+                                    <a class="nav-link dropdown-toggle text-light fw-semibold" href="#" role="button" data-bs-toggle="dropdown">Servicios 3</a>
                                     <ul class="dropdown-menu">
                                         <li><a class="dropdown-item" href="../turno/listaturno.php">Turnos</a></li>
                                         <li><a class="dropdown-item" href="../tarea/listatarea.php">Tareas</a></li>
@@ -76,11 +67,10 @@ $rol = $_SESSION['id_rol'];
                                     </ul>
                                 </li>
                             <?php endif; ?>
+                            
                             <?php if ($_SESSION['id_rol'] === 3) : ?>
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle text-light fw-semibold" href="#" role="button" data-bs-toggle="dropdown">
-                                        Servicios 1
-                                    </a>
+                                    <a class="nav-link dropdown-toggle text-light fw-semibold" href="#" role="button" data-bs-toggle="dropdown">Servicios 1</a>
                                     <ul class="dropdown-menu">
                                         <li><a class="dropdown-item" href="../turno/listaturno.php">Mis Turnos</a></li>
                                         <li><a class="dropdown-item" href="../campaña/listacampaña.php">Campañas Activas</a></li>
@@ -88,9 +78,7 @@ $rol = $_SESSION['id_rol'];
                                     </ul>
                                 </li>
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle text-light fw-semibold" href="#" role="button" data-bs-toggle="dropdown">
-                                        Servicios 2
-                                    </a>
+                                    <a class="nav-link dropdown-toggle text-light fw-semibold" href="#" role="button" data-bs-toggle="dropdown">Servicios 2</a>
                                     <ul class="dropdown-menu">
                                         <li><a class="dropdown-item" href="../credenciales/listacredenciales.php">Mi Cuenta</a></li>
                                         <li><a class="dropdown-item" href="../roles/listaroles.php">Mi Rol</a></li>
@@ -98,6 +86,7 @@ $rol = $_SESSION['id_rol'];
                                 </li>
                             <?php endif; ?>
                         </ul>
+                        
                         <a href="<?php
                             if ($_SESSION['id_rol'] == 3) echo "../../agente.php";
                             elseif ($_SESSION['id_rol'] == 1) echo "../../admin.php";
@@ -119,6 +108,7 @@ $rol = $_SESSION['id_rol'];
                 <a href="agregaracceso.php" class="boton d-flex justify-content-center align-items-center mx-auto mt-3" style="width: 150px; height: 40px; border-radius: 10px; font-size: 1rem;">Agregar</a>
             </div>
         <?php } ?>
+        
         <?php if ($_SESSION['id_rol'] != 3) { ?>
             <div class="col-md-6">
                 <h3 class="py-2 px-3 mx-2 shadow-sm text-center" style="background: linear-gradient(180deg, #4caed4 0%, #5d8ea1 100%);color: black; max-width: 300px; border-radius: 15px; border: 2px solid white; font-size: 1.2rem;">
@@ -169,48 +159,52 @@ $rol = $_SESSION['id_rol'];
                 </thead>
                 <tbody>
                     <?php
-                    // Consulta según el rol
+                    // ✅ MySQL: Consulta según el rol
                     if ($_SESSION['id_rol'] == 3) {
-                        $idempleado = $_SESSION['id_empleado'];
-                        $sql = pg_query_params($conexion, 
-                            "SELECT fecha, hora_entrada, hora_salida, observacion 
+                        $idempleado = (int)$_SESSION['id_empleado'];
+                        $stmt = mysqli_prepare($conexion, 
+                            "SELECT Fecha, Hora_Entrada, Hora_Salida, Observacion 
                              FROM control_acceso 
-                             WHERE id_empleado = $1 
-                             ORDER BY fecha DESC", 
-                            array($idempleado)
+                             WHERE id_Empleado = ? 
+                             ORDER BY Fecha DESC"
                         );
+                        mysqli_stmt_bind_param($stmt, "i", $idempleado);
+                        mysqli_stmt_execute($stmt);
+                        $sql = mysqli_stmt_get_result($stmt);
                     } else {
-                        $sql = pg_query($conexion, 
-                            "SELECT * FROM control_acceso ORDER BY id_control DESC"
-                        );
+                        $sql = mysqli_query($conexion, "SELECT * FROM control_acceso ORDER BY ID_Control DESC");
                     }
 
-                    if ($sql && pg_num_rows($sql) > 0) {
-                        while ($datos = pg_fetch_object($sql)) { ?>
+                    // ✅ MySQL: Usar mysqli_fetch_object
+                    if ($sql && mysqli_num_rows($sql) > 0) {
+                        while ($datos = mysqli_fetch_object($sql)) { ?>
                             <tr>
                                 <?php if ($_SESSION['id_rol'] != 3) { ?>
-                                    <td><?= htmlspecialchars($datos->id_control) ?></td>
-                                    <td><?= htmlspecialchars($datos->id_empleado) ?></td>
-                                    <td><?= date('d/m/Y', strtotime($datos->fecha)) ?></td>
-                                    <td><?= htmlspecialchars($datos->hora_entrada) ?></td>
-                                    <td><?= htmlspecialchars($datos->hora_salida) ?></td>
-                                    <td><?= htmlspecialchars($datos->observacion) ?></td>
+                                    <td><?= htmlspecialchars($datos->ID_Control) ?></td>
+                                    <td><?= htmlspecialchars($datos->id_Empleado) ?></td>
+                                    <td><?= date('d/m/Y', strtotime($datos->Fecha)) ?></td>
+                                    <td><?= htmlspecialchars($datos->Hora_Entrada) ?></td>
+                                    <td><?= htmlspecialchars($datos->Hora_Salida) ?></td>
+                                    <td><?= htmlspecialchars($datos->Observacion) ?></td>
                                     <td>
-                                        <a href="modificarControlacceso.php?id=<?= $datos->id_control ?>" class="btn btn-small btn-warning">
+                                        <a href="modificarControlacceso.php?id=<?= $datos->ID_Control ?>" class="btn btn-sm btn-warning">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </a>
-                                        <a onclick="return eliminar()" href="listacontrol.php?id=<?= $datos->id_control ?>" class="btn btn-small btn-danger">
+                                        <a onclick="return eliminar()" href="listacontrol.php?id=<?= $datos->ID_Control ?>" class="btn btn-sm btn-danger">
                                             <i class="fa-solid fa-trash"></i>
                                         </a>
                                     </td>
                                 <?php } else { ?>
-                                    <td><?= date('d/m/Y', strtotime($datos->fecha)) ?></td>
-                                    <td><?= htmlspecialchars($datos->hora_entrada) ?></td>
-                                    <td><?= htmlspecialchars($datos->hora_salida) ?></td>
-                                    <td><?= htmlspecialchars($datos->observacion) ?></td>
+                                    <td><?= date('d/m/Y', strtotime($datos->Fecha)) ?></td>
+                                    <td><?= htmlspecialchars($datos->Hora_Entrada) ?></td>
+                                    <td><?= htmlspecialchars($datos->Hora_Salida) ?></td>
+                                    <td><?= htmlspecialchars($datos->Observacion) ?></td>
                                 <?php } ?>
                             </tr>
                         <?php }
+                        if ($_SESSION['id_rol'] == 3) {
+                            mysqli_stmt_close($stmt);
+                        }
                     } else {
                         $colspan = ($_SESSION['id_rol'] != 3) ? 7 : 4;
                         echo '<tr><td colspan="' . $colspan . '" class="text-center">No hay registros de acceso</td></tr>';
@@ -220,6 +214,7 @@ $rol = $_SESSION['id_rol'];
             </table>
         </div>
     </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../../js/main.js"></script>
 </body>

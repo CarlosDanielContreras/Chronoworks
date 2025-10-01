@@ -1,12 +1,15 @@
 <?php
-// ============================================
-// ARCHIVO: vista/asignacion/modificarasignacion.php
-// ============================================
 session_start();
 include_once "../../modelo/Conexion.php";
 
 $id = (int)$_GET['id'];
-$sql = pg_query_params($conexion, "SELECT * FROM asignacion WHERE id_asignacion = $1", array($id));
+
+// ✅ MySQL: Usar mysqli_prepare
+$stmt = mysqli_prepare($conexion, "SELECT * FROM asignacion WHERE id_Asignacion = ?");
+mysqli_stmt_bind_param($stmt, "i", $id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+$sql = $result; // Para compatibilidad con el código siguiente
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -35,10 +38,11 @@ $sql = pg_query_params($conexion, "SELECT * FROM asignacion WHERE id_asignacion 
             </div>
         </div>
     </header>
-    <h2 class="text-center py-3 px-4 mx-auto shadow-sm"
-        style="color: black; max-width: 400px; margin-top: 2rem; margin-bottom: 2rem; border-radius: 15px; border: solid 2px; border-color: white;">
+    
+    <h2 class="text-center py-3 px-4 mx-auto shadow-sm" style="color: black; max-width: 400px; margin-top: 2rem; margin-bottom: 2rem; border-radius: 15px; border: solid 2px; border-color: white;">
         Modificar Asignación
     </h2>
+    
     <div class="container">
         <div class="col-12">
             <form method="post">
@@ -46,8 +50,9 @@ $sql = pg_query_params($conexion, "SELECT * FROM asignacion WHERE id_asignacion 
                 <?php
                 include "../../controlador/asignacion/modificar_asignacion.php";
                 
-                if ($sql && pg_num_rows($sql) > 0) {
-                    $datos = pg_fetch_object($sql);
+                // ✅ MySQL: Usar mysqli_num_rows y mysqli_fetch_object
+                if ($sql && mysqli_num_rows($sql) > 0) {
+                    $datos = mysqli_fetch_object($sql);
                 ?>
                     <div class="row mb-3">
                         <div class="col-6">
@@ -55,13 +60,15 @@ $sql = pg_query_params($conexion, "SELECT * FROM asignacion WHERE id_asignacion 
                             <select class="form-control" id="idtarea" name="idtarea" required>
                                 <option value="">Seleccione una tarea</option>
                                 <?php
-                                $sql_tareas = pg_query($conexion, "SELECT t.id_tarea, t.nombre_tarea, e.nombre, e.apellido 
-                                                                    FROM tarea t 
-                                                                    JOIN empleados e ON t.id_empleado = e.id_empleado 
-                                                                    ORDER BY t.nombre_tarea");
-                                while ($tarea = pg_fetch_object($sql_tareas)) {
-                                    $selected = ($tarea->id_tarea == $datos->id_tarea) ? 'selected' : '';
-                                    echo "<option value='{$tarea->id_tarea}' $selected>{$tarea->nombre_tarea} - {$tarea->nombre} {$tarea->apellido}</option>";
+                                $sql_tareas = mysqli_query($conexion, 
+                                    "SELECT t.ID_Tarea, t.nombre_tarea, e.Nombre, e.Apellido 
+                                     FROM tarea t 
+                                     JOIN empleados e ON t.ID_Empleado = e.ID_Empleado 
+                                     ORDER BY t.nombre_tarea"
+                                );
+                                while ($tarea = mysqli_fetch_object($sql_tareas)) {
+                                    $selected = ($tarea->ID_Tarea == $datos->Id_tarea) ? 'selected' : '';
+                                    echo "<option value='{$tarea->ID_Tarea}' $selected>{$tarea->nombre_tarea} - {$tarea->Nombre} {$tarea->Apellido}</option>";
                                 }
                                 ?>
                             </select>
@@ -71,28 +78,33 @@ $sql = pg_query_params($conexion, "SELECT * FROM asignacion WHERE id_asignacion 
                             <select class="form-control" id="idcampaña" name="idcampaña" required>
                                 <option value="">Seleccione una campaña</option>
                                 <?php
-                                $sql_campanias = pg_query($conexion, "SELECT c.id_campania, c.nombre_campania, e.nombre_empresa 
-                                                                       FROM campania c 
-                                                                       JOIN empresa e ON c.id_empresa = e.id_empresa 
-                                                                       ORDER BY c.nombre_campania");
-                                while ($campania = pg_fetch_object($sql_campanias)) {
-                                    $selected = ($campania->id_campania == $datos->id_campania) ? 'selected' : '';
-                                    echo "<option value='{$campania->id_campania}' $selected>{$campania->nombre_campania} - {$campania->nombre_empresa}</option>";
+                                $sql_campanias = mysqli_query($conexion, 
+                                    "SELECT c.ID_Campania, c.Nombre_Campania, e.Nombre_Empresa 
+                                     FROM campania c 
+                                     JOIN empresa e ON c.ID_Empresa = e.ID_Empresa 
+                                     ORDER BY c.Nombre_Campania"
+                                );
+                                while ($campania = mysqli_fetch_object($sql_campanias)) {
+                                    $selected = ($campania->ID_Campania == $datos->Id_campania) ? 'selected' : '';
+                                    echo "<option value='{$campania->ID_Campania}' $selected>{$campania->Nombre_Campania} - {$campania->Nombre_Empresa}</option>";
                                 }
                                 ?>
                             </select>
                         </div>
                     </div>
+                    
                     <div class="row mb-3">
                         <div class="mb-3 col-6">
                             <label for="fechaasignacion" class="form-label">Fecha de Asignación:</label>
-                            <input type="date" class="form-control" name="fechaasignacion" id="fechaasignacion" value="<?= $datos->fecha ?>" required>
+                            <input type="datetime-local" class="form-control" name="fechaasignacion" id="fechaasignacion" 
+                                   value="<?= date('Y-m-d\TH:i', strtotime($datos->fecha)) ?>" required>
                         </div>
                         <div class="mb-3 col-6">
                             <label for="observaciones" class="form-label">Observaciones:</label>
-                            <textarea class="form-control" name="observaciones" id="observaciones" placeholder="Observaciones..." required><?= htmlspecialchars($datos->observaciones) ?></textarea>
+                            <textarea class="form-control" name="observaciones" id="observaciones" placeholder="Observaciones..." rows="3" required><?= htmlspecialchars($datos->observaciones) ?></textarea>
                         </div>
                     </div>
+                    
                     <div class="d-flex justify-content-center">
                         <button type="submit" class="btn btn-primary shadow py-2 px-4 fw-bold col-5" name="btnregistrar" value="ok">Actualizar</button>
                     </div>
@@ -100,10 +112,12 @@ $sql = pg_query_params($conexion, "SELECT * FROM asignacion WHERE id_asignacion 
                 } else {
                     echo '<div class="alert alert-danger">No se encontró la asignación</div>';
                 }
+                mysqli_stmt_close($stmt);
                 ?>
             </form>
         </div>
     </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
